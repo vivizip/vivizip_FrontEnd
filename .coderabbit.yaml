@@ -1,0 +1,12 @@
+language: "ko"
+
+reviews:
+  profile: "assertive"
+  path_filters:
+    - "!dist/**"
+    - "!node_modules/**"
+    - "!.next/**"
+    - "!src/api/generated/**"
+
+chat:
+  auto_reply: true

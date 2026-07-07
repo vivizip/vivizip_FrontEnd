@@ -9,7 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native (CNG: android/ios는 app.json + plugins에서 매 빌드마다 prebuild로 재생성)
+/android/
+/ios/
 .kotlin/
 *.orig.*
 *.jks
@@ -31,11 +33,14 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# EAS credentials (keystore 비밀번호 등 민감 정보 — 절대 커밋 금지)
+credentials.json
+credentials/
+
 
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android

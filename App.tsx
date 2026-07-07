@@ -1,20 +1,18 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import "./global.css";
+
+import React from "react";
+import { Text, View } from "react-native";
+
+import KakaoLoginButton from "./src/features/auth/components/KakaoLoginButton";
 
 export default function App() {
+  console.log("[App] render start (no expo-font)");
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+    <View>
+      <Text className="text-primary-500">색상 테스트: 파랑이면 tailwind OK</Text>
+      <Text className="text-secondary-500">색상 테스트: 분홍이면 tailwind OK</Text>
+      <KakaoLoginButton />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
