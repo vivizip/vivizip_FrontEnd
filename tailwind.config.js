@@ -2,7 +2,7 @@
 const plugin = require("tailwindcss/plugin");
 
 module.exports = {
-  content: ["./App.tsx", "./src/**/*.{js,jsx,ts,tsx}"],
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
@@ -40,14 +40,16 @@ module.exports = {
           300: "#FFAFB9",
           400: "#EF5D70",
           500: "#CB3D50",
-          600: "#CB3D50",
+          // TODO(디자인 확인 필요): Figma 원본에서 500과 600이 동일값(#CB3D50)이었음 — 500~700 사이 보간값으로 임시 대체
+          600: "#B8253E",
           700: "#A50D2C",
           800: "#800824",
           900: "#550319",
         },
       },
       fontFamily: {
-        pretendard: ["Pretendard-Variable"],
+        // expo-font config plugin은 파일명(확장자 제외)을 폰트 패밀리명으로 등록함
+        pretendard: ["PretendardVariable"],
       },
       fontSize: {
         12: "12px",
@@ -64,7 +66,7 @@ module.exports = {
   plugins: [
     // 디자인 시스템 타이포그래피 (Figma) — text-<category>-<size> 로 사용
     plugin(function ({ addComponents }) {
-      const pretendard = "Pretendard-Variable";
+      const pretendard = "PretendardVariable";
       addComponents({
         ".text-headline-l": {
           fontFamily: pretendard,
