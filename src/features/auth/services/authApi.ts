@@ -1,4 +1,7 @@
+import { isAxiosError } from "axios";
+
 import { api } from "../../../lib/api";
+import type { ApiEnvelope } from "../../../types/api";
 
 /**
  * 카카오 accessToken을 백엔드로 보내 우리 서비스 JWT로 교환한다.
@@ -11,10 +14,10 @@ import { api } from "../../../lib/api";
 // 실제 로그인 엔드포인트 경로
 const KAKAO_LOGIN_ENDPOINT = "/api/auth/login/kakao";
 
+// 성공 응답은 봉투 없이 평평한 구조로 온다 (2026-07-07 실제 응답으로 확인)
 export type KakaoLoginResponse = {
-  // 응답 스키마
   accessToken: string;
-  refreshToken?: string;
+  refreshToken: string;
   userId: number;
   nickname: string;
 };
@@ -27,9 +30,20 @@ export const loginWithKakaoToken = async (
     baseURL: api.defaults.baseURL,
     payload: { kakaoAccessToken },
   });
-  const { data } = await api.post<KakaoLoginResponse>(KAKAO_LOGIN_ENDPOINT, {
-    kakaoAccessToken,
-  });
-  console.log("[Auth API] Response from backend:", data);
-  return data;
+  try {
+    const { data } = await api.post<KakaoLoginResponse>(KAKAO_LOGIN_ENDPOINT, {
+      kakaoAccessToken,
+    });
+    console.log("[Auth API] Response from backend:", data);
+    return data;
+  } catch (err) {
+    // 실패 응답(4xx/5xx)만 봉투 구조로 오므로, 봉투에서 백엔드 메시지를 꺼내 노출한다
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
 };
