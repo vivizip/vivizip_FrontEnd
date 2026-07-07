@@ -7,8 +7,7 @@ import {
 
 /**
  * 카카오 로그인 비즈니스 로직 훅.
- * login()은 카카오톡 앱이 설치되어 있으면 앱으로, 없으면 웹 계정 로그인으로 진행된다.
- * 카카오 accessToken을 백엔드로 보내 우리 서비스 JWT로 교환한 결과를 반환한다.
+ * login()은 카카오톡 앱이 설치되어 있으면 앱으로, 없으면 웹 계정 로그인으로 진행.
  */
 export const useKakaoLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,10 +18,14 @@ export const useKakaoLogin = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const { accessToken } = await login();
-        // 카카오 accessToken을 백엔드로 전달해 서비스 토큰으로 교환
+        console.log("[Kakao Login] Starting login()...");
+        const result = await login();
+        console.log("[Kakao Login] login() returned:", JSON.stringify(result));
+        const { accessToken } = result;
+        console.log("[Kakao Login] accessToken from SDK:", accessToken);
         return await loginWithKakaoToken(accessToken);
       } catch (err) {
+        console.log("[Kakao Login] Error caught:", String(err));
         setError(err instanceof Error ? err : new Error(String(err)));
         return null;
       } finally {
