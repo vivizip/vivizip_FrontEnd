@@ -9,19 +9,22 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://vivizip.o-r.kr"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://vivizip.o-r.kr"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://vivizip.o-r.kr"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

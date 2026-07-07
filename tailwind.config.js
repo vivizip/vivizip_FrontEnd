@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require("tailwindcss/plugin");
+
 module.exports = {
   content: ["./App.tsx", "./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
@@ -47,7 +49,96 @@ module.exports = {
       fontFamily: {
         pretendard: ["Pretendard-Variable"],
       },
+      fontSize: {
+        12: "12px",
+        14: "14px",
+        16: "16px",
+        18: "18px",
+        20: "20px",
+        22: "22px",
+        24: "24px",
+        28: "28px",
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    // 디자인 시스템 타이포그래피 (Figma) — text-<category>-<size> 로 사용
+    plugin(function ({ addComponents }) {
+      const pretendard = "Pretendard-Variable";
+      addComponents({
+        ".text-headline-l": {
+          fontFamily: pretendard,
+          fontSize: "28px",
+          fontWeight: "600",
+          lineHeight: "36px",
+        },
+        ".text-headline-m": {
+          fontFamily: pretendard,
+          fontSize: "24px",
+          fontWeight: "600",
+          lineHeight: "32px",
+        },
+        ".text-headline-s": {
+          fontFamily: pretendard,
+          fontSize: "22px",
+          fontWeight: "600",
+          lineHeight: "30px",
+        },
+        ".text-title-l": {
+          fontFamily: pretendard,
+          fontSize: "20px",
+          fontWeight: "600",
+          lineHeight: "28px",
+        },
+        ".text-title-m": {
+          fontFamily: pretendard,
+          fontSize: "18px",
+          fontWeight: "600",
+          lineHeight: "26px",
+        },
+        ".text-title-s": {
+          fontFamily: pretendard,
+          fontSize: "16px",
+          fontWeight: "500",
+          lineHeight: "24px",
+        },
+        ".text-body-l": {
+          fontFamily: pretendard,
+          fontSize: "18px",
+          fontWeight: "500",
+          lineHeight: "26px",
+        },
+        ".text-body-m": {
+          fontFamily: pretendard,
+          fontSize: "16px",
+          fontWeight: "500",
+          lineHeight: "24px",
+        },
+        ".text-body-s": {
+          fontFamily: pretendard,
+          fontSize: "14px",
+          fontWeight: "400",
+          lineHeight: "22px",
+        },
+        ".text-label-l": {
+          fontFamily: pretendard,
+          fontSize: "16px",
+          fontWeight: "600",
+          lineHeight: "24px",
+        },
+        ".text-label-m": {
+          fontFamily: pretendard,
+          fontSize: "14px",
+          fontWeight: "500",
+          lineHeight: "20px",
+        },
+        ".text-label-s": {
+          fontFamily: pretendard,
+          fontSize: "12px",
+          fontWeight: "500",
+          lineHeight: "18px",
+        },
+      });
+    }),
+  ],
 };
