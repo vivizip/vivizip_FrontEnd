@@ -1,10 +1,26 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
-// 디자인 시스템 색상 (tailwind.config.js와 동일 값)
-const ACTIVE_TINT = "#2C74F2"; // primary-500
-const INACTIVE_TINT = "#9FA5AF"; // gray-400
+// 탭 라우트별 default/select 아이콘 쌍 (assets/icons)
+const TAB_ICONS: Record<string, { default: number; select: number }> = {
+  home: {
+    default: require("../../assets/icons/ic_home_default.png"),
+    select: require("../../assets/icons/ic_home_select.png"),
+  },
+  chat: {
+    default: require("../../assets/icons/ic_chat_default.png"),
+    select: require("../../assets/icons/ic_chat_select.png"),
+  },
+  "ai-reviewer": {
+    default: require("../../assets/icons/ic_document_default.png"),
+    select: require("../../assets/icons/ic_document_select.png"),
+  },
+  mypage: {
+    default: require("../../assets/icons/ic_profile_default.png"),
+    select: require("../../assets/icons/ic_profile_select.png"),
+  },
+};
 
 /**
  * 플로팅 알약형 커스텀 탭바 (Figma 스펙 기반)
@@ -36,7 +52,7 @@ export default function TabBar({
           const { options } = descriptors[route.key];
           const label = options.title ?? route.name;
           const focused = state.index === index;
-          const color = focused ? ACTIVE_TINT : INACTIVE_TINT;
+          const icons = TAB_ICONS[route.name];
 
           const onPress = () => {
             const event = navigation.emit({
@@ -61,8 +77,14 @@ export default function TabBar({
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}
             >
-              {/* 아이콘 24x24 고정 */}
-              {options.tabBarIcon?.({ focused, color, size: 24 })}
+              {/* 아이콘 24x24 고정, 선택 상태에 따라 default/select 이미지 교체 */}
+              {icons && (
+                <Image
+                  source={focused ? icons.select : icons.default}
+                  className="h-6 w-6"
+                  resizeMode="contain"
+                />
+              )}
               {/* Figma: Pretendard 12px 500, gray-900(#121619), line-height normal */}
               <Text className="text-center font-pretendard text-12 font-medium text-gray-900">
                 {label}

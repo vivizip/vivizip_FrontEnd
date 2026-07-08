@@ -13,6 +13,7 @@ import type { ApiEnvelope } from "../../../types/api";
 
 // 실제 로그인 엔드포인트 경로
 const KAKAO_LOGIN_ENDPOINT = "/api/auth/login/kakao";
+const LOGOUT_ENDPOINT = "/api/tokens/logout";
 
 // 성공 응답은 봉투 없이 평평한 구조로 온다 (2026-07-07 실제 응답으로 확인)
 export type KakaoLoginResponse = {
@@ -46,4 +47,12 @@ export const loginWithKakaoToken = async (
     }
     throw err;
   }
+};
+
+/**
+ * 서버에 저장된 refreshToken을 무효화한다.
+ * 응답 바디 없이 200 OK만 온다.
+ */
+export const logout = async (refreshToken: string): Promise<void> => {
+  await api.post(LOGOUT_ENDPOINT, { refreshToken });
 };
