@@ -9,12 +9,12 @@ import NonMemberButton from "../../features/auth/components/NonMemberButton";
 export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 items-center justify-center gap-12 px-6">
+      <View className="flex-1 items-center justify-between px-6 pb-[76px] pt-[160px]">
         <LoginTitle />
         <View className="w-full items-center gap-3">
           <KakaoLoginButton />
           <NonMemberButton />
-          <AndroidKeyHashDebug />
+          {/* <AndroidKeyHashDebug /> */}
         </View>
       </View>
     </SafeAreaView>
