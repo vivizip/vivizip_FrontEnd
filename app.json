@@ -55,6 +55,7 @@
           "fonts": ["./assets/fonts/PretendardVariable.ttf"]
         }
       ],
+      "./plugins/with-android-keyhash-module",
       "expo-router"
     ],
     "extra": {

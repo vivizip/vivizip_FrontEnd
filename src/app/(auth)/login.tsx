@@ -1,6 +1,7 @@
 import React from "react";
 import { SafeAreaView, View } from "react-native";
 
+import AndroidKeyHashDebug from "../../features/auth/components/AndroidKeyHashDebug";
 import KakaoLoginButton from "../../features/auth/components/KakaoLoginButton";
 import LoginTitle from "../../features/auth/components/LoginTitle";
 import NonMemberButton from "../../features/auth/components/NonMemberButton";
@@ -13,6 +14,7 @@ export default function LoginScreen() {
         <View className="w-full items-center gap-3">
           <KakaoLoginButton />
           <NonMemberButton />
+          <AndroidKeyHashDebug />
         </View>
       </View>
     </SafeAreaView>
