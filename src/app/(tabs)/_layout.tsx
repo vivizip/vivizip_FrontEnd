@@ -2,17 +2,14 @@ import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
-// 디자인 시스템 색상 (tailwind.config.js와 동일 값)
-const ACTIVE_TINT = "#2C74F2"; // primary-500
-const INACTIVE_TINT = "#9FA5AF"; // gray-400
+import TabBar from "../../components/TabBar";
 
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: ACTIVE_TINT,
-        tabBarInactiveTintColor: INACTIVE_TINT,
       }}
     >
       <Tabs.Screen
@@ -25,29 +22,29 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          title: "채팅",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubble-ellipses" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="ai-reviewer"
         options={{
-          title: "AI 서류 검토",
+          title: "서류 검토",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-text" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="matching"
+        name="mypage"
         options={{
-          title: "1:1 매칭",
+          title: "마이페이지",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="housing-report"
-        options={{
-          title: "입주 리포트",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="clipboard" size={size} color={color} />
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />
