@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 import { login } from "@react-native-seoul/kakao-login";
+
+import { saveTokens } from "../../../lib/tokenStorage";
 import {
   loginWithKakaoToken,
   type KakaoLoginResponse,
@@ -23,7 +25,10 @@ export const useKakaoLogin = () => {
         console.log("[Kakao Login] login() returned:", JSON.stringify(result));
         const { accessToken } = result;
         console.log("[Kakao Login] accessToken from SDK:", accessToken);
-        return await loginWithKakaoToken(accessToken);
+        const session = await loginWithKakaoToken(accessToken);
+        // 서비스 JWT를 기기 암호화 저장소에 보관 (자동 로그인 + API 인증에 사용)
+        await saveTokens(session.accessToken, session.refreshToken);
+        return session;
       } catch (err) {
         console.log("[Kakao Login] Error caught:", String(err));
         setError(err instanceof Error ? err : new Error(String(err)));

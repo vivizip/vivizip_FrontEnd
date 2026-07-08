@@ -1,4 +1,11 @@
-import axios from "axios";
+import axios, { isAxiosError, type InternalAxiosRequestConfig } from "axios";
+
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  saveTokens,
+} from "./tokenStorage";
 
 /**
  * 앱 전역에서 공용으로 쓰는 axios 인스턴스.
@@ -22,3 +29,73 @@ export const api = axios.create({
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
 });
+
+// 로그인 후 저장된 서비스 JWT를 모든 요청에 자동 첨부
+api.interceptors.request.use(async (config) => {
+  const accessToken = await getAccessToken();
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
+
+// ---- 토큰 만료(401) 시 자동 재발급 ----
+
+type ReissueResponse = {
+  grantType: string;
+  accessToken: string;
+  refreshToken: string;
+  code_expire: string;
+  refresh_expire: string;
+};
+
+// 동시에 여러 요청이 401을 맞아도 재발급은 한 번만 수행
+let reissuePromise: Promise<string | null> | null = null;
+
+const reissueTokens = async (): Promise<string | null> => {
+  const refreshToken = await getRefreshToken();
+  if (!refreshToken) {
+    return null;
+  }
+  try {
+    // api 인스턴스를 쓰면 인터셉터가 다시 돌아 무한루프가 되므로 순수 axios로 호출
+    const { data } = await axios.post<ReissueResponse>(
+      `${baseURL}/api/tokens/reissue`,
+      { refreshToken },
+      { headers: { "Content-Type": "application/json" }, timeout: 10000 },
+    );
+    await saveTokens(data.accessToken, data.refreshToken);
+    return data.accessToken;
+  } catch {
+    // 재발급 실패 = 세션 만료. 토큰을 지워 게이트(/)가 로그인으로 보내게 한다
+    await clearTokens();
+    return null;
+  }
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error?.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
+
+    if (
+      isAxiosError(error) &&
+      error.response?.status === 401 &&
+      original &&
+      !original._retry
+    ) {
+      original._retry = true; // 요청당 재시도는 1회만
+      reissuePromise = reissuePromise ?? reissueTokens();
+      const newAccessToken = await reissuePromise;
+      reissuePromise = null;
+
+      if (newAccessToken) {
+        original.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(original);
+      }
+    }
+    return Promise.reject(error);
+  },
+);
