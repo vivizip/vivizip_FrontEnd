@@ -79,7 +79,7 @@ src/
 │
 ├── store/ # 테마, 글로벌 토스트 등 앱 전역에서 참조하는 상태 관리
 └── types/ # 프로젝트 전역에서 공유하는 데이터 모델 및 타입 정의
-    └── api.ts # 백엔드 에러 응답 봉투 타입 (ApiEnvelope)
+└── api.ts # 백엔드 에러 응답 봉투 타입 (ApiEnvelope)
 
 plugins/ # Expo config plugin (prebuild 시 네이티브 코드 자동 주입, android/ios는 커밋 안 함)
 └── with-android-keyhash-module.js # 카카오 로그인 KeyHash 확인용 네이티브 모듈 주입
@@ -103,3 +103,5 @@ plugins/ # Expo config plugin (prebuild 시 네이티브 코드 자동 주입, a
 }
 
 # 디자인 시스템
+
+tailwind.config.js 참고
