@@ -8,9 +8,8 @@ const INACTIVE_TINT = "#9FA5AF"; // gray-400
 
 /**
  * 플로팅 알약형 커스텀 탭바 (Figma 스펙 기반)
- * - width 350, padding 10px 0, gap 8, radius 100px, bg white 70%
+ * - 컨테이너: width 328, padding 4, gap 2, radius 100px, bg #FFF
  * - box-shadow는 RN 스타일(shadow*, elevation)로 변환
- * - backdrop-filter(blur)는 RN 미지원이라 반투명 배경으로 근사
  */
 export default function TabBar({
   state,
@@ -22,13 +21,14 @@ export default function TabBar({
       pointerEvents="box-none"
       className="absolute inset-x-0 bottom-6 items-center"
     >
+      {/* Figma: 328px, padding 4px, gap 2px, radius 100px, bg #FFF, shadow 0 2px 10px 12% */}
       <View
-        className="w-[350px] flex-row items-center justify-center gap-2 rounded-[100px] bg-white/70 py-[10px]"
+        className="w-[328px] flex-row items-center justify-center gap-0.5 rounded-[100px] bg-white p-1"
         style={{
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
+          shadowOpacity: 0.12,
+          shadowRadius: 10,
           elevation: 6, // Android는 shadow* 대신 elevation 사용
         }}
       >
