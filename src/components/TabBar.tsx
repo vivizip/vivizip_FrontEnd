@@ -65,14 +65,16 @@ export default function TabBar({
             }
           };
 
+          // Figma: 78px 고정폭, padding 6px 12px, gap 2px, radius 500px, 선택된 탭에 gray-100 배경 유지
+          const itemClassName = focused
+            ? "w-[78px] shrink-0 flex-col items-center gap-0.5 rounded-[500px] bg-gray-100 px-3 py-1.5"
+            : "w-[78px] shrink-0 flex-col items-center gap-0.5 rounded-[500px] px-3 py-1.5 active:bg-gray-100";
+
           return (
             <Pressable
               key={route.key}
               onPress={onPress}
-              // Figma: 78px 고정폭, padding 6px 12px, gap 2px, radius 500px, 선택된 탭에 gray-100 배경 유지
-              className={`w-[78px] shrink-0 flex-col items-center gap-0.5 rounded-[500px] px-3 py-1.5 ${
-                focused ? "bg-gray-100" : "active:bg-gray-100"
-              }`}
+              className={itemClassName}
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}
