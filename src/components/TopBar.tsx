@@ -31,7 +31,11 @@ export default function TopBar({
   return (
     <View className="w-full flex-row items-center gap-2 px-4 py-3">
       {leftIcon && (
-        <Pressable onPress={onPressLeft} accessibilityRole="button">
+        <Pressable
+          onPress={onPressLeft}
+          hitSlop={12}
+          accessibilityRole="button"
+        >
           <Image source={leftIcon} className="h-6 w-6" resizeMode="contain" />
         </Pressable>
       )}
