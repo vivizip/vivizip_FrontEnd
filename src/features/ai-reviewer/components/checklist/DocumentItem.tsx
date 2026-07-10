@@ -6,13 +6,20 @@ import ChipS from "../../../../components/ChipS";
 type Props = {
   name: string;
   isLast?: boolean;
+  /** 이 단계(계약전 등)가 등록된 집으로 인해 활성화됐는지 */
+  isActive?: boolean;
 };
 
 /**
  * 문서 한 줄 (문서명 + 발급하기 chip-s).
  * 발급하기 액션은 추후 연결.
+ * 활성화 시 chip 배경 primary-500, 텍스트 #F2F7FC로 변경 (Figma).
  */
-export default function DocumentItem({ name, isLast = false }: Props) {
+export default function DocumentItem({
+  name,
+  isLast = false,
+  isActive = false,
+}: Props) {
   return (
     <Pressable
       className={`h-[52px] flex-row items-center justify-between px-4 active:opacity-70 ${
@@ -21,11 +28,19 @@ export default function DocumentItem({ name, isLast = false }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`${name} 발급하기`}
     >
-      {/* Figma: Label-m (Pretendard 14/500, lh 20), gray-400 */}
-      <Text className="font-pretendard text-14 font-medium leading-5 text-gray-400">
+      {/* Figma: Label-m (Pretendard 14/500, lh 20), gray-400(활성 시 gray-900) */}
+      <Text
+        className={`font-pretendard text-14 font-medium leading-5 ${
+          isActive ? "text-gray-900" : "text-gray-400"
+        }`}
+      >
         {name}
       </Text>
-      <ChipS label="발급하기" />
+      <ChipS
+        label="발급하기"
+        bgClassName={isActive ? "bg-primary-500" : undefined}
+        textClassName={isActive ? "text-[#F2F7FC]" : undefined}
+      />
     </Pressable>
   );
 }
