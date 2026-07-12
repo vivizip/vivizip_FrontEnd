@@ -68,7 +68,8 @@ export default function DocumentChecklist() {
                     isActive={isStepActive}
                     onPress={
                       item.id === "register"
-                        ? () => router.push("/ai-reviewer/register-document")
+                        ? () =>
+                            router.push("/ai-reviewer/before/register-document")
                         : undefined
                     }
                   />

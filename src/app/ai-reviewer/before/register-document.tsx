@@ -4,10 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import DocumentScanner from "react-native-document-scanner-plugin";
 
-import TopBar from "../../components/TopBar";
-import CTAButton from "../../components/CTAButton";
+import TopBar from "../../../components/TopBar";
+import CTAButton from "../../../components/CTAButton";
 
-const backIcon = require("../../../assets/icons/ic_left.png");
+const backIcon = require("../../../../assets/icons/ic_left.png");
 
 /**
  * 등기부등본 발급 방법 선택 화면.
