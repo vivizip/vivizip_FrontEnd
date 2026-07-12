@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { DOCUMENT_STEPS } from "../../constants";
 import { useRegisteredHouseStore } from "../../store/useRegisteredHouseStore";
@@ -13,6 +14,7 @@ import DocumentItem from "./DocumentItem";
  * TODO(눈대중 구현): Figma 스펙으로 보정 예정.
  */
 export default function DocumentChecklist() {
+  const router = useRouter();
   const hasHouse = useRegisteredHouseStore((state) => state.address !== null);
 
   return (
@@ -64,6 +66,11 @@ export default function DocumentChecklist() {
                     name={item.name}
                     isLast={itemIndex === step.items.length - 1}
                     isActive={isStepActive}
+                    onPress={
+                      item.id === "register"
+                        ? () => router.push("/ai-reviewer/register-document")
+                        : undefined
+                    }
                   />
                 ))}
               </View>
