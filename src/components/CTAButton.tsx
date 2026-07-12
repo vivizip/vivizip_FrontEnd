@@ -19,7 +19,7 @@ export default function CTAButton({ label, active, onPress }: Props) {
     <Pressable
       onPress={active ? onPress : undefined}
       disabled={!active}
-      className={`h-11 w-full items-center justify-center rounded-2xl px-4 ${
+      className={`h-11 w-full items-center justify-center rounded-2xl px-4 font-semibold ${
         active ? "bg-primary-500 active:opacity-80" : "bg-gray-100"
       }`}
       accessibilityRole="button"
