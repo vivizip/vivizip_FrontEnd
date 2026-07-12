@@ -66,6 +66,15 @@ export default function AnalyzingScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri?: string }>();
   console.log("[Analyzing] received imageUri:", imageUri);
 
+  // TEST ONLY: 분석 API가 없어 완료 신호를 흉내내는 임시 타이머.
+  // API 나오면 폴링 완료 콜백으로 교체하고 이 useEffect는 제거할 것.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace("/ai-reviewer/document-result");
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [router]);
+
   return (
     <SafeAreaView className="flex-1 bg-[#F2F7FC]">
       <TopBar

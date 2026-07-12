@@ -7,6 +7,10 @@ type Props = {
   onChange: (index: number) => void;
   /** 컨테이너 배경 tailwind 클래스 (기본 bg-gray-100 / Figma Tab2는 bg-gray-50) */
   bgClassName?: string;
+  /** 활성 탭 텍스트 색상 override (기본 tracking-[-0.16px] text-primary-500) */
+  activeTextClassName?: string;
+  /** 비활성 탭 텍스트 색상 override (기본 text-gray-900) */
+  inactiveTextClassName?: string;
 };
 
 /**
@@ -17,12 +21,15 @@ type Props = {
  *   - 활성: bg #FFF / 비활성: 배경 없음(컨테이너 배경이 그대로 비침)
  * - 텍스트: 비활성 Label/Label-l(16/600, lh24) gray-900,
  *   활성 Title/Title-s(16/600, lh24, ls -0.16px) primary-500(#2C74F2)
+ *   - 다른 화면(예: 등기부등본 확인)에서는 색상이 달라 activeTextClassName/inactiveTextClassName로 override
  */
 export default function Tab1({
   tabs,
   activeIndex,
   onChange,
   bgClassName,
+  activeTextClassName,
+  inactiveTextClassName,
 }: Props) {
   return (
     <View
@@ -45,8 +52,8 @@ export default function Tab1({
             <Text
               className={`font-pretendard text-16 font-semibold leading-6 ${
                 isActive
-                  ? "tracking-[-0.16px] text-primary-500"
-                  : "text-gray-900"
+                  ? (activeTextClassName ?? "tracking-[-0.16px] text-primary-500")
+                  : (inactiveTextClassName ?? "text-gray-900")
               }`}
             >
               {label}

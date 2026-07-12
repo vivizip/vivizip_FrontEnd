@@ -25,3 +25,27 @@ export const uploadDocumentImage = async (imageUri: string) => {
   });
   return data;
 };
+
+// 등기부등본/건축물대장 - "앱에서 발급할래요" 선택 시 문서 종류
+export type DocumentType = "registry" | "building";
+
+/**
+ * 앱 내 서류 발급을 요청한다. HouseSelector에 설정된 현재 주소를 함께 전달.
+ *
+ * TODO(API 대기): 백엔드 API가 아직 없어 골격만 잡아둔 스텁.
+ * 스펙이 나오면 아래를 실측 응답 기준으로 확정할 것:
+ * - 엔드포인트 경로 (아래는 임시값)
+ * - 요청 바디 필드명(address 등)/응답 타입
+ */
+const DOCUMENT_ISSUE_ENDPOINT = "/api/documents/issue"; // TODO: 실제 경로로 교체
+
+export const requestDocumentIssuance = async (
+  documentType: DocumentType,
+  address: string,
+) => {
+  const { data } = await api.post(DOCUMENT_ISSUE_ENDPOINT, {
+    documentType,
+    address,
+  });
+  return data;
+};

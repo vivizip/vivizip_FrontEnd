@@ -6,6 +6,8 @@ import DocumentScanner from "react-native-document-scanner-plugin";
 
 import TopBar from "../../../components/TopBar";
 import CTAButton from "../../../components/CTAButton";
+import { requestDocumentIssuance } from "../../../features/ai-reviewer/services/documentApi";
+import { useRegisteredHouseStore } from "../../../features/ai-reviewer/store/useRegisteredHouseStore";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 
@@ -15,6 +17,20 @@ const backIcon = require("../../../../assets/icons/ic_left.png");
  */
 export default function RegisterDocumentScreen() {
   const router = useRouter();
+  const address = useRegisteredHouseStore((state) => state.address);
+
+  // 앱 내 발급 요청 - 현재 등록된 집 주소를 서버로 전달 (API 나오기 전까지는 실패해도 무시하고 진행)
+  const handleIssueInApp = async () => {
+    if (address) {
+      try {
+        await requestDocumentIssuance("registry", address);
+      } catch (err) {
+        console.log("[RegisterDocument] issuance request failed:", String(err));
+      }
+    }
+    // TODO: 앱 내 발급(API) 연동 전까지 분석 화면으로 바로 이동
+    router.push("/ai-reviewer/analyzing");
+  };
 
   // 네이티브 문서 스캐너 실행: 모서리 감지/가이드/자동촬영/원근보정까지 스캐너가 처리
   const handleScanDocument = async () => {
@@ -59,10 +75,7 @@ export default function RegisterDocumentScreen() {
           <CTAButton
             label="앱에서 발급할래요"
             active
-            onPress={() => {
-              // TODO: 앱 내 발급(API) 연동 전까지 분석 화면으로 바로 이동
-              router.push("/ai-reviewer/analyzing");
-            }}
+            onPress={handleIssueInApp}
           />
           <Pressable
             className="h-11 w-full items-center justify-center self-stretch rounded-xl bg-primary-50 px-4 py-3 active:opacity-70"
