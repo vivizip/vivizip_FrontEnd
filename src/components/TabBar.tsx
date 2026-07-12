@@ -35,7 +35,7 @@ export default function TabBar({
   return (
     <View
       pointerEvents="box-none"
-      className="absolute inset-x-0 bottom-6 items-center"
+      className="absolute inset-x-0 bottom-[54px] items-center"
     >
       {/* Figma: 328px, padding 4px, gap 2px, radius 100px, bg #FFF, shadow 0 2px 10px 12% */}
       <View
