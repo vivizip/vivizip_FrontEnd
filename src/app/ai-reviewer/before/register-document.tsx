@@ -29,7 +29,10 @@ export default function RegisterDocumentScreen() {
       }
     }
     // TODO: 앱 내 발급(API) 연동 전까지 분석 화면으로 바로 이동
-    router.push("/ai-reviewer/analyzing");
+    router.push({
+      pathname: "/ai-reviewer/analyzing",
+      params: { documentType: "registry" },
+    });
   };
 
   // 네이티브 문서 스캐너 실행: 모서리 감지/가이드/자동촬영/원근보정까지 스캐너가 처리
@@ -42,7 +45,7 @@ export default function RegisterDocumentScreen() {
         // 보정된 이미지 경로를 분석 화면으로 전달 (업로드 API 연동 전까지는 전달만)
         router.push({
           pathname: "/ai-reviewer/analyzing",
-          params: { imageUri: scannedImages[0] },
+          params: { documentType: "registry", imageUri: scannedImages[0] },
         });
       }
       // status === "cancel"이면 사용자가 스캐너를 닫은 것 - 현재 화면 유지

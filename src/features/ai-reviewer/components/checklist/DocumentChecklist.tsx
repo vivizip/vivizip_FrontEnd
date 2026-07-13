@@ -17,6 +17,20 @@ export default function DocumentChecklist() {
   const router = useRouter();
   const hasHouse = useRegisteredHouseStore((state) => state.address !== null);
 
+  const handlePressDocument = (itemId: string) => {
+    if (itemId === "register") {
+      router.push("/ai-reviewer/before/register-document");
+      return;
+    }
+
+    if (itemId === "building") {
+      router.push({
+        pathname: "/ai-reviewer/analyzing",
+        params: { documentType: "building" },
+      });
+    }
+  };
+
   return (
     <View>
       {DOCUMENT_STEPS.map((step, stepIndex) => {
@@ -66,12 +80,7 @@ export default function DocumentChecklist() {
                     name={item.name}
                     isLast={itemIndex === step.items.length - 1}
                     isActive={isStepActive}
-                    onPress={
-                      item.id === "register"
-                        ? () =>
-                            router.push("/ai-reviewer/before/register-document")
-                        : undefined
-                    }
+                    onPress={() => handlePressDocument(item.id)}
                   />
                 ))}
               </View>

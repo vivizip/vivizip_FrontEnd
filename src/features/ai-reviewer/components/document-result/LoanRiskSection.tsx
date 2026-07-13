@@ -188,7 +188,12 @@ export default function LoanRiskSection({
       </View>
 
       <View className="w-full flex-row items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
-        <Image source={aiIcon} className="h-6 w-6" resizeMode="contain" />
+        <Image
+          source={aiIcon}
+          className="h-6 w-6"
+          resizeMode="contain"
+          style={{ width: 24, height: 24 }}
+        />
         <Text className="flex-1 font-pretendard text-14 font-medium leading-5 text-gray-600">
           위험도가 60% 이상의 경우, 보증금의 전부를 돌려받지 못할 수 있어요.
         </Text>

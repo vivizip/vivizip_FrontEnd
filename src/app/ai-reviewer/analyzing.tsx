@@ -63,17 +63,23 @@ export default function AnalyzingScreen() {
   const dotStyle = useDotsProgress();
   // 문서 스캐너로 촬영한 보정 이미지 경로 (앱 발급 경로로 진입 시엔 없음)
   // TODO: 분석 API 나오면 이 URI를 업로드하고 완료 폴링 후 결과 화면으로 이동
-  const { imageUri } = useLocalSearchParams<{ imageUri?: string }>();
+  const { documentType = "registry", imageUri } = useLocalSearchParams<{
+    documentType?: "registry" | "building";
+    imageUri?: string;
+  }>();
   console.log("[Analyzing] received imageUri:", imageUri);
 
   // TEST ONLY: 분석 API가 없어 완료 신호를 흉내내는 임시 타이머.
   // API 나오면 폴링 완료 콜백으로 교체하고 이 useEffect는 제거할 것.
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace("/ai-reviewer/document-result");
+      router.replace({
+        pathname: "/ai-reviewer/document-result",
+        params: { documentType },
+      });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [documentType, router]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F7FC]">
