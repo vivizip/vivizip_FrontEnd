@@ -8,6 +8,7 @@ import MapPreview from "../../features/ai-reviewer/components/search/MapPreview"
 import { useRegisteredHouseStore } from "../../features/ai-reviewer/store/useRegisteredHouseStore";
 import TopBar from "../../components/TopBar";
 import CTAButton from "../../components/CTAButton";
+import { SCREEN_PADDING } from "../../lib/layout";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const kebabIcon = require("../../../assets/icons/ic_kebab.png");
@@ -37,7 +38,10 @@ export default function ConfirmAddressScreen() {
       />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16 }}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_PADDING.horizontal,
+          paddingTop: SCREEN_PADDING.top,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <MapPreview />

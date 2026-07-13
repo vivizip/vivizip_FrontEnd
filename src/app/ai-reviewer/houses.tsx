@@ -11,6 +11,7 @@ import BottomSheet, {
 } from "../../components/BottomSheet";
 import PopupS from "../../components/PopupS";
 import TopBar from "../../components/TopBar";
+import { SCREEN_PADDING } from "../../lib/layout";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const setCurrentIcon = require("../../../assets/icons/ic_location_empty.png");
@@ -168,9 +169,9 @@ export default function RegisteredHousesScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: 40,
+          paddingHorizontal: SCREEN_PADDING.horizontal,
+          paddingTop: SCREEN_PADDING.top,
+          paddingBottom: SCREEN_PADDING.bottom,
         }}
         keyboardShouldPersistTaps="handled"
       >

@@ -24,11 +24,13 @@ export default function AiReviewerScreen() {
     <SafeAreaView className="flex-1 bg-primary-400" edges={["top"]}>
       {/* 상단 파란 영역: 집 선택 + 주소 검색 + 팁 */}
       {/* px-4 = 16px (Tailwind 숫자는 4px 단위: p-4=16px, p-6=24px, p-16=64px) */}
-      <View className="gap-4 px-4 pb-6 pt-5">
+      <View className="gap-4 px-4 pb-6 pt-8">
         <HouseSelector />
         {/* 검색창 ↔ 팁 간격은 10px (Figma) */}
         <View className="gap-[10px]">
-          <AddressSearchBar onPress={() => router.push("/ai-reviewer/search")} />
+          <AddressSearchBar
+            onPress={() => router.push("/ai-reviewer/search")}
+          />
           <ReviewTip />
         </View>
       </View>

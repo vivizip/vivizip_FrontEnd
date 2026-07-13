@@ -50,6 +50,11 @@ export default function DocumentChecklist() {
 
     if (itemId === "brokerage") {
       router.push("/ai-reviewer/during/brokerage-info");
+      return;
+    }
+
+    if (itemId === "lease-contract") {
+      router.push("/ai-reviewer/during/lease-contract-info");
     }
   };
 
@@ -102,7 +107,8 @@ export default function DocumentChecklist() {
                   const hasScreen =
                     item.id === "register" ||
                     item.id === "building" ||
-                    item.id === "brokerage";
+                    item.id === "brokerage" ||
+                    item.id === "lease-contract";
 
                   return (
                     <DocumentItem

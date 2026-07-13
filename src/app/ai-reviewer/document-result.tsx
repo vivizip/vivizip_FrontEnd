@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import TopBar from "../../components/TopBar";
+import { SCREEN_PADDING } from "../../lib/layout";
 import Tab1 from "../../components/Tab1";
 import InfoRow from "../../features/ai-reviewer/components/document-result/InfoRow";
 import InfoBanner from "../../features/ai-reviewer/components/document-result/InfoBanner";
@@ -183,9 +184,9 @@ export default function DocumentResultScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 32,
-          paddingBottom: 40,
+          paddingHorizontal: SCREEN_PADDING.horizontal,
+          paddingTop: 32, // TopBar 아래 문서명/탭 블록이 이미 24px 고정이라 스크롤 영역만 별도
+          paddingBottom: SCREEN_PADDING.bottom,
           gap: 32,
         }}
         showsVerticalScrollIndicator={false}

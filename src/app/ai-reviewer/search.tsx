@@ -10,6 +10,7 @@ import SearchResultList from "../../features/ai-reviewer/components/search/Searc
 import type { AddressSearchResult } from "../../features/ai-reviewer/components/search/SearchResultItem";
 import TopBar from "../../components/TopBar";
 import SearchInput from "../../components/SearchInput";
+import { SCREEN_PADDING } from "../../lib/layout";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 
@@ -58,9 +59,9 @@ export default function AddressSearchScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: 40,
+          paddingHorizontal: SCREEN_PADDING.horizontal,
+          paddingTop: SCREEN_PADDING.top,
+          paddingBottom: SCREEN_PADDING.bottom,
         }}
         keyboardShouldPersistTaps="handled"
       >

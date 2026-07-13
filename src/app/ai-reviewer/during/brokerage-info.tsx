@@ -10,6 +10,7 @@ import PageDots from "../../../features/ai-reviewer/components/brokerage-info/Pa
 import SectionHeader from "../../../features/ai-reviewer/components/brokerage-info/SectionHeader";
 import FeatureCard from "../../../features/ai-reviewer/components/brokerage-info/FeatureCard";
 import DiagramCard from "../../../features/ai-reviewer/components/brokerage-info/DiagramCard";
+import { SCREEN_PADDING } from "../../../lib/layout";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 const cameraIcon = require("../../../../assets/icons/icon_camera.png");
@@ -54,9 +55,9 @@ export default function BrokerageInfoScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: 40,
+          paddingHorizontal: SCREEN_PADDING.horizontal,
+          paddingTop: SCREEN_PADDING.top,
+          paddingBottom: SCREEN_PADDING.bottom,
         }}
         showsVerticalScrollIndicator={false}
       >

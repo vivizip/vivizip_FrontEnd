@@ -64,26 +64,36 @@ export default function AnalyzingScreen() {
   // 문서 스캐너로 촬영한 보정 이미지 경로 (앱 발급 경로로 진입 시엔 없음)
   // TODO: 분석 API 나오면 이 URI를 업로드하고 완료 폴링 후 결과 화면으로 이동
   const { documentType = "registry", imageUri } = useLocalSearchParams<{
-    documentType?: "registry" | "building" | "brokerage";
+    documentType?: "registry" | "building" | "brokerage" | "lease-contract";
     imageUri?: string;
   }>();
   console.log("[Analyzing] received imageUri:", imageUri);
 
-  // document-result는 아직 등기부등본/건축물대장 콘텐츠만 있어서 그 외 문서 종류는 자동 이동하지 않음
-  const hasResultScreen = documentType === "registry" || documentType === "building";
+  // 결과 화면이 아직 없는 문서 종류(lease-contract)는 자동 이동하지 않음
+  const hasResultScreen =
+    documentType === "registry" ||
+    documentType === "building" ||
+    documentType === "brokerage";
 
   // TEST ONLY: 분석 API가 없어 완료 신호를 흉내내는 임시 타이머.
   // API 나오면 폴링 완료 콜백으로 교체하고 이 useEffect는 제거할 것.
   useEffect(() => {
     if (!hasResultScreen) return;
     const timer = setTimeout(() => {
+      if (documentType === "brokerage") {
+        router.replace({
+          pathname: "/ai-reviewer/during/brokerage-result",
+          params: { imageUri },
+        });
+        return;
+      }
       router.replace({
         pathname: "/ai-reviewer/document-result",
         params: { documentType },
       });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [documentType, hasResultScreen, router]);
+  }, [documentType, hasResultScreen, imageUri, router]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F7FC]">

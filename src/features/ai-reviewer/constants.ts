@@ -28,7 +28,7 @@ export const DOCUMENT_STEPS: ChecklistStep[] = [
     title: "계약중",
     items: [
       { id: "brokerage", name: "중개대상물 확인 설명서" },
-      { id: "building-during", name: "건축물대장" },
+      { id: "lease-contract", name: "임대차 계약서" },
     ],
   },
   {
