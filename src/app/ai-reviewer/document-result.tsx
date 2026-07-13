@@ -9,13 +9,13 @@ import InfoRow from "../../features/ai-reviewer/components/document-result/InfoR
 import InfoBanner from "../../features/ai-reviewer/components/document-result/InfoBanner";
 import RiskCard from "../../features/ai-reviewer/components/document-result/RiskCard";
 import ChecklistCard from "../../features/ai-reviewer/components/document-result/ChecklistCard";
+import CheckedItemsCard from "../../features/ai-reviewer/components/document-result/CheckedItemsCard";
 import LoanRiskSection from "../../features/ai-reviewer/components/document-result/LoanRiskSection";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const profileIcon = require("../../../assets/icons/icon_profile.png");
 const calendarIcon = require("../../../assets/icons/lucide_calendar.png");
 const buildingIcon = require("../../../assets/icons/ic_building.png");
-const infoCardIcon = require("../../../assets/icons/ic_info_card.png");
 const cautionIcon = require("../../../assets/icons/ic_caution_colored.png");
 const checkIcon = require("../../../assets/icons/ic_check_small.png");
 const checkBigIcon = require("../../../assets/icons/ic_check_big.png");
@@ -25,8 +25,7 @@ const aiIcon = require("../../../assets/icons/ic_ai.png");
 const REGISTRY_TABS = ["기본 정보", "위험 요소", "근저당"];
 const BUILDING_TABS = ["기본 정보", "위험 요소"];
 
-type BuildingComparisonStatus = "positive" | "negative";
-type BuildingViolationStatus = "positive" | "negative";
+type PositiveNegativeStatus = "positive" | "negative";
 
 // 발급일 Date -> "YYYY.MM.DD에 발급했어요" 형식 라벨 변환
 const formatIssuedAt = (date: Date) => {
@@ -47,26 +46,51 @@ const MOCK_RESULT = {
     "서울 중구 충무로2가 65-4, 신한 스퀘어브릿지 빌라 501호",
     "7층 도시형생활주택",
   ],
-  noticeText:
-    "상업용이 아닌 주거용 건물이에요. \n비자 변경/연장 시 체류지 신고가 가능해요",
-  risks: [
-    {
-      title: "가등기",
-      description:
-        "집이 법적으로 다른 사람에게 넘어갈 예정이라, 집 주인이 바뀔 수 있다는 의미예요. 소유권이 어떻게 될 것인지에 대해 정확하게 확인하고, 직거래는 안 하는 게 좋아요.",
-    },
-    {
-      title: "임차권 등기명령",
-      description:
-        "앞서 집을 빌린 세입자가 집주인에게 보증금을 돌려받지 못한 사례가 있어요. 어떤 일이 있었는지 중개업자나 집주인에게 이유를 물어보는 것이 좋아요.",
-    },
-  ],
-  preContractChecklist: [
-    "왜 가등기가 등록되었는지 중개인에게 물어보세요.",
-    "현재 집주인이 누구인지 다시 확인하세요.",
-    "이전 세입자의 문제가 모두 해결되었는지 확인하세요.",
-  ],
+  // 상업용/주거용 여부에 따른 안내 배너 분기 (BUILDING_RESULT.comparison과 동일한 구조)
+  usage: {
+    status: "positive" as PositiveNegativeStatus,
+    positiveText:
+      "상업용이 아닌 주거용 건물이에요. \n비자 변경/연장 시 체류지 신고가 가능해요",
+    negativeText:
+      "상업용 건물이에요. \n비자 변경/연장 시 체류지 신고가 어려울 수 있어요",
+  },
+  // 위험 요소 탭 positive/negative 분기 (스크린샷 기반, 상세 스펙 추후 조정 예정)
+  riskFactors: {
+    status: "positive" as PositiveNegativeStatus,
+    positiveTitle: "위험요소가 발견되지 않았어요",
+    positiveDescription:
+      "현재 확인한 등기부등본 기준으로 특별히 주의할 내용은 발견되지 않았어요.",
+    checkedItems: [
+      { title: "가등기", description: "집의 소유권이 바뀔 수 있는 권리" },
+      { title: "가압류", description: "빚을 갚지 않아 재산이 묶인 상태" },
+      {
+        title: "임차권등기명령",
+        description: "이전 세입자의 보증금 문제가 남아있음",
+      },
+      { title: "경매개시결정", description: "집의 경매 절차가 시작된 상태" },
+    ],
+    notice:
+      "현재 등기부등본 기준으로 분석한 결과예요. 계약 전 최신 서류인지 다시 확인해 보세요.",
+    negativeRisks: [
+      {
+        title: "가등기",
+        description:
+          "집이 법적으로 다른 사람에게 넘어갈 예정이라, 집 주인이 바뀔 수 있다는 의미예요. 소유권이 어떻게 될 것인지에 대해 정확하게 확인하고, 직거래는 안 하는 게 좋아요.",
+      },
+      {
+        title: "임차권 등기명령",
+        description:
+          "앞서 집을 빌린 세입자가 집주인에게 보증금을 돌려받지 못한 사례가 있어요. 어떤 일이 있었는지 중개업자나 집주인에게 이유를 물어보는 것이 좋아요.",
+      },
+    ],
+    negativeChecklist: [
+      "왜 가등기가 등록되었는지 중개인에게 물어보세요.",
+      "현재 집주인이 누구인지 다시 확인하세요.",
+      "이전 세입자의 문제가 모두 해결되었는지 확인하세요.",
+    ],
+  },
   loanRisk: {
+    status: "positive" as PositiveNegativeStatus,
     homePrice: 10000,
     maxClaimAmount: 6500,
     myDeposit: 1000,
@@ -78,14 +102,14 @@ const BUILDING_RESULT = {
   title: "건축물대장",
   issuedAt: new Date(2026, 6, 10),
   comparison: {
-    status: "positive" as BuildingComparisonStatus,
+    status: "positive" as PositiveNegativeStatus,
     positiveText:
       "등기부등본과 비교한 결과, 주소와 집주인이 일치하는 것을 확인했어요.",
     negativeText:
       "등기부등본과 비교한 결과, 주소 또는 집 주인이 일치하지 않아요. 계약에 주의하세요",
   },
   buildingViolation: {
-    status: "positive" as BuildingViolationStatus,
+    status: "positive" as PositiveNegativeStatus,
     positiveTitle: "위반건축물이 아니에요",
     positiveDescription:
       "정식으로 등록된 건물이에요.\n계약 전에 확인해야 하는 중요한 항목을 통과했어요.",
@@ -112,8 +136,12 @@ export default function DocumentResultScreen() {
   const isBuilding = documentType === "building";
   const result = isBuilding ? BUILDING_RESULT : MOCK_RESULT;
   const tabs = isBuilding ? BUILDING_TABS : REGISTRY_TABS;
-  const buildingComparison = isBuilding ? BUILDING_RESULT.comparison : null;
-  const buildingViolation = isBuilding ? BUILDING_RESULT.buildingViolation : null;
+  const buildingViolation = isBuilding
+    ? BUILDING_RESULT.buildingViolation
+    : null;
+  const infoBanner = isBuilding
+    ? BUILDING_RESULT.comparison
+    : MOCK_RESULT.usage;
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
@@ -177,15 +205,13 @@ export default function DocumentResultScreen() {
             </View>
 
             <InfoBanner
-              icon={buildingComparison ? aiIcon : infoCardIcon}
+              icon={aiIcon}
               text={
-                buildingComparison
-                  ? buildingComparison.status === "negative"
-                    ? buildingComparison.negativeText
-                    : buildingComparison.positiveText
-                  : result.noticeText
+                infoBanner.status === "negative"
+                  ? infoBanner.negativeText
+                  : infoBanner.positiveText
               }
-              variant={buildingComparison?.status ?? "positive"}
+              variant={infoBanner.status}
             />
           </>
         )}
@@ -231,19 +257,59 @@ export default function DocumentResultScreen() {
 
         {activeIndex === 1 && !isBuilding && (
           <View className="gap-8">
-            {result.risks.map((risk, index) => (
-              <RiskCard
-                key={index}
-                icon={cautionIcon}
-                title={risk.title}
-                description={risk.description}
-              />
-            ))}
-            <ChecklistCard
-              icon={checkIcon}
-              title="계약 전 확인해보세요"
-              items={result.preContractChecklist}
-            />
+            {result.riskFactors.status === "negative" ? (
+              <>
+                {result.riskFactors.negativeRisks.map((risk, index) => (
+                  <RiskCard
+                    key={index}
+                    icon={cautionIcon}
+                    title={risk.title}
+                    description={risk.description}
+                  />
+                ))}
+                <ChecklistCard
+                  icon={checkIcon}
+                  title="계약 전 확인해보세요"
+                  items={result.riskFactors.negativeChecklist}
+                />
+              </>
+            ) : (
+              <>
+                <View className="w-full items-center gap-5 bg-white">
+                  <Image
+                    source={checkBigIcon}
+                    className="h-12 w-12"
+                    resizeMode="contain"
+                    style={{ width: 48, height: 48 }}
+                  />
+                  <View className="w-full gap-2">
+                    <Text className="text-headline-s text-center text-gray-900">
+                      {result.riskFactors.positiveTitle}
+                    </Text>
+                    <Text className="text-label-m w-full text-center text-gray-500">
+                      {result.riskFactors.positiveDescription}
+                    </Text>
+                  </View>
+                </View>
+
+                <CheckedItemsCard
+                  icon={checkIcon}
+                  title="등기부등본에서 확인한 내용이에요."
+                  items={result.riskFactors.checkedItems}
+                />
+
+                <View className="w-full flex-row items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
+                  <Image
+                    source={aiIcon}
+                    className="h-6 w-6"
+                    resizeMode="contain"
+                  />
+                  <Text className="flex-1 font-pretendard text-14 font-medium leading-5 text-gray-600">
+                    {result.riskFactors.notice}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -251,7 +317,9 @@ export default function DocumentResultScreen() {
           <View className="gap-8">
             <LoanRiskSection
               cautionIcon={cautionBigIcon}
+              checkIcon={checkBigIcon}
               aiIcon={aiIcon}
+              status={MOCK_RESULT.loanRisk.status}
               homePrice={MOCK_RESULT.loanRisk.homePrice}
               maxClaimAmount={MOCK_RESULT.loanRisk.maxClaimAmount}
               initialMyDeposit={MOCK_RESULT.loanRisk.myDeposit}

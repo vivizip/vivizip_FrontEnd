@@ -13,7 +13,9 @@ import LoanCalcSheet from "./LoanCalcSheet";
 
 type Props = {
   cautionIcon: ImageSourcePropType;
+  checkIcon: ImageSourcePropType;
   aiIcon: ImageSourcePropType;
+  status: "positive" | "negative";
   homePrice: number;
   maxClaimAmount: number;
   initialMyDeposit: number;
@@ -37,7 +39,9 @@ const ANIMATION_DURATION = 220;
  */
 export default function LoanRiskSection({
   cautionIcon,
+  checkIcon,
   aiIcon,
+  status,
   homePrice,
   maxClaimAmount,
   initialMyDeposit,
@@ -47,6 +51,7 @@ export default function LoanRiskSection({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSheetMounted, setIsSheetMounted] = useState(false);
   const riskRatio = 75;
+  const isPositive = status === "positive";
 
   // 배경: opacity 0 -> 0.2 (Figma) / 시트: translateY SHEET_OFFSCREEN_Y -> 0 (slide up)
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -105,10 +110,14 @@ export default function LoanRiskSection({
   return (
     <>
       <View className="w-full flex-col items-center gap-5 bg-white">
-        <Image source={cautionIcon} className="h-12 w-12" resizeMode="contain" />
+        <Image
+          source={isPositive ? checkIcon : cautionIcon}
+          className="h-12 w-12"
+          resizeMode="contain"
+        />
         <View className="w-full gap-2">
           <Text className="text-headline-s text-center text-gray-900">
-            근저당권이 확인되었어요
+            {isPositive ? "근저당권이 확인되지 않았어요" : "근저당권이 확인되었어요"}
           </Text>
           <Text className="w-full text-center text-label-m text-gray-500">
             {
@@ -118,74 +127,76 @@ export default function LoanRiskSection({
         </View>
       </View>
 
-      <View className="w-full gap-2">
-        <Text className="text-title-m text-gray-900">근저당권 위험도 계산</Text>
-        <View className="w-full gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-5">
-          <View className="w-full gap-3">
-            <View className="w-full flex-row items-center justify-between">
-              <Text className="text-label-s text-gray-500">집의 시세</Text>
-              <Text className="text-label-s text-gray-900">{formatWon(homePrice)}</Text>
-            </View>
-
-            <View className="relative h-3 w-full overflow-hidden rounded-full bg-gray-50">
-              <View
-                className="absolute left-0 top-0 h-3 rounded-full bg-secondary-400"
-                style={{ width: `${DEPOSIT_BAR_PERCENT}%` }}
-              />
-              <View
-                className="absolute left-0 top-0 h-3 rounded-full bg-secondary-300"
-                style={{ width: `${CLAIM_BAR_PERCENT}%` }}
-              />
-            </View>
-
-            <View className="w-full gap-2">
+      {!isPositive && (
+        <View className="w-full gap-2">
+          <Text className="text-title-m text-gray-900">근저당권 위험도 계산</Text>
+          <View className="w-full gap-2.5 rounded-2xl border border-gray-100 bg-white px-4 py-5">
+            <View className="w-full gap-3">
               <View className="w-full flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
-                  <View className="h-3 w-3 rounded-full bg-secondary-300" />
-                  <Text className="text-label-s text-gray-500">채권최고액</Text>
-                </View>
-                <Text className="text-label-s text-gray-900">{formatWon(maxClaimAmount)}</Text>
+                <Text className="text-label-s text-gray-500">집의 시세</Text>
+                <Text className="text-label-s text-gray-900">{formatWon(homePrice)}</Text>
               </View>
-              <View className="w-full flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
-                  <View className="h-3 w-3 rounded-full bg-secondary-400" />
-                  <Text className="text-label-s text-gray-500">내 보증금</Text>
+
+              <View className="relative h-3 w-full overflow-hidden rounded-full bg-gray-50">
+                <View
+                  className="absolute left-0 top-0 h-3 rounded-full bg-secondary-400"
+                  style={{ width: `${DEPOSIT_BAR_PERCENT}%` }}
+                />
+                <View
+                  className="absolute left-0 top-0 h-3 rounded-full bg-secondary-300"
+                  style={{ width: `${CLAIM_BAR_PERCENT}%` }}
+                />
+              </View>
+
+              <View className="w-full gap-2">
+                <View className="w-full flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <View className="h-3 w-3 rounded-full bg-secondary-300" />
+                    <Text className="text-label-s text-gray-500">채권최고액</Text>
+                  </View>
+                  <Text className="text-label-s text-gray-900">{formatWon(maxClaimAmount)}</Text>
                 </View>
-                <Text className="text-label-s text-gray-900">{formatWon(myDeposit)}</Text>
+                <View className="w-full flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <View className="h-3 w-3 rounded-full bg-secondary-400" />
+                    <Text className="text-label-s text-gray-500">내 보증금</Text>
+                  </View>
+                  <Text className="text-label-s text-gray-900">{formatWon(myDeposit)}</Text>
+                </View>
+              </View>
+
+              <View className="h-px w-full bg-gray-100" />
+
+              <View className="w-full flex-row items-center justify-between">
+                <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-800">
+                  위험 비율
+                </Text>
+                <Text className="text-title-m text-secondary-400">{riskRatio}%</Text>
               </View>
             </View>
 
-            <View className="h-px w-full bg-gray-100" />
-
-            <View className="w-full flex-row items-center justify-between">
+            <Pressable
+              onPress={openSheet}
+              className="h-10 w-full items-center justify-center rounded-xl bg-gray-50 active:opacity-70"
+              accessibilityRole="button"
+            >
               <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-800">
-                위험 비율
+                직접 입력하기
               </Text>
-              <Text className="text-title-m text-secondary-400">{riskRatio}%</Text>
+            </Pressable>
+
+            <View className="w-full flex-row gap-1">
+              <Text className="font-pretendard text-12 font-normal leading-4 tracking-[-0.24px] text-gray-500">
+                *
+              </Text>
+              <Text className="flex-1 font-pretendard text-12 font-normal leading-4 tracking-[-0.24px] text-gray-500">
+                채권최고액과 입력한 정보를 바탕으로 계산한 참고 결과입니다. 실제
+                권리관계나 보증금 반환 여부를 보장하지 않습니다.
+              </Text>
             </View>
-          </View>
-
-          <Pressable
-            onPress={openSheet}
-            className="h-10 w-full items-center justify-center rounded-xl bg-gray-50 active:opacity-70"
-            accessibilityRole="button"
-          >
-            <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-800">
-              직접 입력하기
-            </Text>
-          </Pressable>
-
-          <View className="w-full flex-row gap-1">
-            <Text className="font-pretendard text-12 font-normal leading-4 tracking-[-0.24px] text-gray-500">
-              *
-            </Text>
-            <Text className="flex-1 font-pretendard text-12 font-normal leading-4 tracking-[-0.24px] text-gray-500">
-              채권최고액과 입력한 정보를 바탕으로 계산한 참고 결과입니다. 실제
-              권리관계나 보증금 반환 여부를 보장하지 않습니다.
-            </Text>
           </View>
         </View>
-      </View>
+      )}
 
       <View className="w-full flex-row items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
         <Image
@@ -195,7 +206,9 @@ export default function LoanRiskSection({
           style={{ width: 24, height: 24 }}
         />
         <Text className="flex-1 font-pretendard text-14 font-medium leading-5 text-gray-600">
-          위험도가 60% 이상의 경우, 보증금의 전부를 돌려받지 못할 수 있어요.
+          {isPositive
+            ? "현재 등기부등본 기준으로 분석한 결과예요. 계약 전 최신 서류인지 다시 확인해 보세요."
+            : "위험도가 60% 이상의 경우, 보증금의 전부를 돌려받지 못할 수 있어요."}
         </Text>
       </View>
 
