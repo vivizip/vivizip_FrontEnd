@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -11,6 +11,7 @@ import RiskCard from "../../features/ai-reviewer/components/document-result/Risk
 import ChecklistCard from "../../features/ai-reviewer/components/document-result/ChecklistCard";
 import CheckedItemsCard from "../../features/ai-reviewer/components/document-result/CheckedItemsCard";
 import LoanRiskSection from "../../features/ai-reviewer/components/document-result/LoanRiskSection";
+import { useDocumentProgressStore } from "../../features/ai-reviewer/store/useDocumentProgressStore";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const profileIcon = require("../../../assets/icons/icon_profile.png");
@@ -143,6 +144,12 @@ export default function DocumentResultScreen() {
     ? BUILDING_RESULT.comparison
     : MOCK_RESULT.usage;
   const [activeIndex, setActiveIndex] = useState(0);
+  const markCompleted = useDocumentProgressStore((state) => state.markCompleted);
+
+  // 이 화면에 도달했다는 건 발급/분석이 완료됐다는 뜻 - 계약전 체크리스트 항목을 완료 처리
+  useEffect(() => {
+    markCompleted(isBuilding ? "building" : "register");
+  }, [isBuilding, markCompleted]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -304,7 +311,7 @@ export default function DocumentResultScreen() {
                     className="h-6 w-6"
                     resizeMode="contain"
                   />
-                  <Text className="flex-1 font-pretendard text-14 font-medium leading-5 text-gray-600">
+                  <Text className="flex-1 font-pretendard-medium text-14 font-medium leading-5 text-gray-600">
                     {result.riskFactors.notice}
                   </Text>
                 </View>

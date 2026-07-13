@@ -44,10 +44,10 @@ export default function ConfirmAddressScreen() {
 
         {/* 지도 ↔ 주소 텍스트 간격은 스펙 미확정으로 눈대중값 */}
         <View className="mt-6 gap-1">
-          <Text className="font-pretendard text-14 font-semibold leading-[22px] text-primary-600">
+          <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-primary-600">
             현재 주소
           </Text>
-          <Text className="font-pretendard text-18 font-medium leading-[26px] text-gray-900">
+          <Text className="font-pretendard-medium text-18 font-medium leading-[26px] text-gray-900">
             {address}
           </Text>
         </View>

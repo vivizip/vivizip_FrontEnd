@@ -30,7 +30,7 @@ export default function HouseSelector() {
       <Text
         numberOfLines={1}
         ellipsizeMode="tail"
-        className="font-pretendard text-18 font-semibold leading-[26px] text-gray-900"
+        className="font-pretendard-semibold text-18 font-semibold leading-[26px] text-gray-900"
       >
         {hasHouse ? address : "등록된 집이 없어요"}
       </Text>

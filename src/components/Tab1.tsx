@@ -50,7 +50,7 @@ export default function Tab1({
             accessibilityState={{ selected: isActive }}
           >
             <Text
-              className={`font-pretendard text-16 font-semibold leading-6 ${
+              className={`font-pretendard-semibold text-16 font-semibold leading-6 ${
                 isActive
                   ? (activeTextClassName ?? "tracking-[-0.16px] text-primary-500")
                   : (inactiveTextClassName ?? "text-gray-900")

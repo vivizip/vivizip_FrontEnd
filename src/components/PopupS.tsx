@@ -38,10 +38,10 @@ export default function PopupS({
       }}
     >
       <View className="w-full items-start gap-2">
-        <Text className="text-left font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-900">
+        <Text className="text-left font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-900">
           {title}
         </Text>
-        <Text className="text-left font-pretendard text-14 font-medium leading-5 text-gray-600">
+        <Text className="text-left font-pretendard-medium text-14 font-medium leading-5 text-gray-600">
           {subtitle}
         </Text>
       </View>
@@ -53,7 +53,7 @@ export default function PopupS({
           accessibilityRole="button"
           accessibilityLabel={cancelLabel}
         >
-          <Text className="text-center font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-600">
+          <Text className="text-center font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-600">
             {cancelLabel}
           </Text>
         </Pressable>
@@ -63,7 +63,7 @@ export default function PopupS({
           accessibilityRole="button"
           accessibilityLabel={confirmLabel}
         >
-          <Text className="text-center font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-50">
+          <Text className="text-center font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-50">
             {confirmLabel}
           </Text>
         </Pressable>

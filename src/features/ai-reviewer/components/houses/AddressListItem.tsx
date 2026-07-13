@@ -43,7 +43,7 @@ export default function AddressListItem({
         <View className="flex-row items-center gap-2">
           <Text
             numberOfLines={1}
-            className="font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-900"
+            className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-900"
           >
             {address.title}
           </Text>
@@ -52,7 +52,7 @@ export default function AddressListItem({
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          className="font-pretendard text-14 font-medium leading-5 text-gray-600"
+          className="font-pretendard-medium text-14 font-medium leading-5 text-gray-600"
         >
           {address.subtitle}
         </Text>

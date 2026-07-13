@@ -43,7 +43,7 @@ export default function ChipM({
       }`}
     >
       <Text
-        className={`font-pretendard text-14 font-semibold leading-[22px] ${
+        className={`font-pretendard-semibold text-14 font-semibold leading-[22px] ${
           textClassName ?? "text-gray-800"
         }`}
       >

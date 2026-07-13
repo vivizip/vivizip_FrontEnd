@@ -33,7 +33,7 @@ export default function SearchInput({
         onSubmitEditing={onSubmitEditing}
         returnKeyType="search"
         // p-0: Android TextInput의 기본 상하 패딩 제거 (컨테이너 패딩이 높이를 결정하도록)
-        className="flex-1 p-0 font-pretendard text-16 font-medium leading-6 text-gray-900"
+        className="flex-1 p-0 font-pretendard-medium text-16 font-medium leading-6 text-gray-900"
       />
       <Image
         source={searchIcon}

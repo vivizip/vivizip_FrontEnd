@@ -16,7 +16,7 @@ export default function NonMemberButton() {
       accessibilityRole="button"
       accessibilityLabel="비회원으로 둘러보기"
     >
-      <Text className="font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-[#3B1D1D]">
+      <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-[#3B1D1D]">
         비회원으로 둘러보기
       </Text>
     </Pressable>

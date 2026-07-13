@@ -29,7 +29,7 @@ export default function CTAButton({ label, active, onPress }: Props) {
       <Text
         numberOfLines={1}
         ellipsizeMode="tail"
-        className={`text-center font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] ${
+        className={`text-center font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] ${
           active ? "text-white" : "text-gray-400"
         }`}
       >

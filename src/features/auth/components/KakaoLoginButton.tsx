@@ -34,7 +34,7 @@ export default function KakaoLoginButton() {
       accessibilityLabel="카카오톡으로 로그인하기"
     >
       <Image source={kakaoLogo} className="h-6 w-6" resizeMode="contain" />
-      <Text className="font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-[#3B1D1D]">
+      <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-[#3B1D1D]">
         카카오톡으로 로그인하기
       </Text>
     </Pressable>

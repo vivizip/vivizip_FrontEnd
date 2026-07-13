@@ -21,16 +21,16 @@ const EXAMPLES: Example[] = [
 export default function SearchExampleList() {
   return (
     <View className="gap-4">
-      <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+      <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
         이렇게 검색해 보세요
       </Text>
       <View className="gap-2">
         {EXAMPLES.map((example) => (
           <View key={example.label} className="flex-row items-center gap-2">
-            <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-600">
+            <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-600">
               {example.label}
             </Text>
-            <Text className="font-pretendard text-12 font-semibold leading-[18px] text-gray-400">
+            <Text className="font-pretendard-semibold text-12 font-semibold leading-[18px] text-gray-400">
               {example.description}
             </Text>
           </View>

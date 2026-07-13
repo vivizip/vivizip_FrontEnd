@@ -14,7 +14,7 @@ type Props = {
 export default function ChipL({ label }: Props) {
   return (
     <View className="flex-row items-center justify-center gap-1 self-start rounded-[500px] bg-gray-100 px-3 py-1.5">
-      <Text className="text-center font-pretendard text-14 font-medium leading-5 text-gray-800">
+      <Text className="text-center font-pretendard-medium text-14 font-medium leading-5 text-gray-800">
         {label}
       </Text>
     </View>

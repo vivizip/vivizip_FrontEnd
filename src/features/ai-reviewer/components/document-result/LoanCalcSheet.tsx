@@ -36,28 +36,28 @@ export default function LoanCalcSheet({
 
       <View className="w-full gap-5">
         <View className="w-full flex-row items-center gap-4">
-          <Text className="w-16 font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+          <Text className="w-16 font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
             집의 시세
           </Text>
           <View className="flex-1 flex-row items-center justify-end gap-2">
-            <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+            <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
               {formatManwon(homePrice)}
             </Text>
-            <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+            <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
               만원
             </Text>
           </View>
         </View>
 
         <View className="w-full flex-row items-center gap-4">
-          <Text className="w-16 font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+          <Text className="w-16 font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
             채권최고액
           </Text>
           <View className="flex-1 flex-row items-center justify-end gap-2">
-            <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+            <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
               {formatManwon(maxClaimAmount)}
             </Text>
-            <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+            <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
               만원
             </Text>
           </View>
@@ -65,15 +65,15 @@ export default function LoanCalcSheet({
 
         <View className="w-full gap-3">
           <View className="w-full flex-row items-center gap-4">
-            <Text className="w-16 font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+            <Text className="w-16 font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
               내 보증금
             </Text>
             <View className="flex-1 flex-col items-end gap-1">
               <View className="w-full flex-row items-center justify-end gap-2">
-                <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-500">
+                <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-500">
                   {formatManwon(depositDraft)}
                 </Text>
-                <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+                <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
                   만원
                 </Text>
               </View>
@@ -90,7 +90,7 @@ export default function LoanCalcSheet({
                 accessibilityRole="button"
                 accessibilityLabel={`${amount}만원 추가`}
               >
-                <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-400">
+                <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-400">
                   +{formatManwon(amount)}만
                 </Text>
               </Pressable>
@@ -105,7 +105,7 @@ export default function LoanCalcSheet({
         accessibilityRole="button"
         accessibilityLabel="계산하기"
       >
-        <Text className="font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-white">
+        <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-white">
           계산하기
         </Text>
       </Pressable>

@@ -41,7 +41,7 @@ export default function TopBar({
       )}
       <Text
         numberOfLines={1}
-        className="flex-1 text-left font-pretendard text-18 font-semibold leading-[26px] text-gray-900"
+        className="flex-1 text-left font-pretendard-semibold text-18 font-semibold leading-[26px] text-gray-900"
       >
         {title}
       </Text>

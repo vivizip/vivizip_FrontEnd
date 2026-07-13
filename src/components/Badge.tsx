@@ -14,7 +14,7 @@ type Props = {
 export default function Badge({ label }: Props) {
   return (
     <View className="h-6 flex-row items-center justify-center gap-2.5 self-start rounded-2xl bg-primary-50 px-2.5">
-      <Text className="font-pretendard text-12 font-semibold leading-[18px] text-primary-500">
+      <Text className="font-pretendard-semibold-semibold text-12 font-semibold leading-[18px] text-primary-500">
         {label}
       </Text>
     </View>

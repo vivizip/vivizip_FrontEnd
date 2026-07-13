@@ -27,7 +27,7 @@ export default function CurrentLocationButton({ onPress }: Props) {
         resizeMode="contain"
         style={{ tintColor: "#626975" }} // gray-600
       />
-      <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-600">
+      <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-600">
         현재 위치로 찾기
       </Text>
     </Pressable>

@@ -168,7 +168,7 @@ export default function LoanRiskSection({
               <View className="h-px w-full bg-gray-100" />
 
               <View className="w-full flex-row items-center justify-between">
-                <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-800">
+                <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-800">
                   위험 비율
                 </Text>
                 <Text className="text-title-m text-secondary-400">{riskRatio}%</Text>
@@ -180,7 +180,7 @@ export default function LoanRiskSection({
               className="h-10 w-full items-center justify-center rounded-xl bg-gray-50 active:opacity-70"
               accessibilityRole="button"
             >
-              <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-800">
+              <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-800">
                 직접 입력하기
               </Text>
             </Pressable>
@@ -205,7 +205,7 @@ export default function LoanRiskSection({
           resizeMode="contain"
           style={{ width: 24, height: 24 }}
         />
-        <Text className="flex-1 font-pretendard text-14 font-medium leading-5 text-gray-600">
+        <Text className="flex-1 font-pretendard-medium text-14 font-medium leading-5 text-gray-600">
           {isPositive
             ? "현재 등기부등본 기준으로 분석한 결과예요. 계약 전 최신 서류인지 다시 확인해 보세요."
             : "위험도가 60% 이상의 경우, 보증금의 전부를 돌려받지 못할 수 있어요."}

@@ -22,7 +22,7 @@ export default function ChipS({ label, bgClassName, textClassName }: Props) {
       }`}
     >
       <Text
-        className={`font-pretendard text-14 font-semibold leading-[22px] ${
+        className={`font-pretendard-semibold text-14 font-semibold leading-[22px] ${
           textClassName ?? "text-gray-400"
         }`}
       >

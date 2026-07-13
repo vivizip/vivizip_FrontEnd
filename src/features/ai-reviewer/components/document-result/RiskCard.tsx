@@ -20,7 +20,7 @@ export default function RiskCard({ icon, title, description }: Props) {
         <Text className="text-title-m text-secondary-500">{title}</Text>
       </View>
       <View className="w-full items-center justify-center px-3 py-2.5">
-        <Text className="w-full font-pretendard text-14 font-medium leading-5 text-gray-500">
+        <Text className="w-full font-pretendard-medium text-14 font-medium leading-5 text-gray-500">
           {description}
         </Text>
       </View>

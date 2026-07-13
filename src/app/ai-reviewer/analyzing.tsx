@@ -64,14 +64,18 @@ export default function AnalyzingScreen() {
   // 문서 스캐너로 촬영한 보정 이미지 경로 (앱 발급 경로로 진입 시엔 없음)
   // TODO: 분석 API 나오면 이 URI를 업로드하고 완료 폴링 후 결과 화면으로 이동
   const { documentType = "registry", imageUri } = useLocalSearchParams<{
-    documentType?: "registry" | "building";
+    documentType?: "registry" | "building" | "brokerage";
     imageUri?: string;
   }>();
   console.log("[Analyzing] received imageUri:", imageUri);
 
+  // document-result는 아직 등기부등본/건축물대장 콘텐츠만 있어서 그 외 문서 종류는 자동 이동하지 않음
+  const hasResultScreen = documentType === "registry" || documentType === "building";
+
   // TEST ONLY: 분석 API가 없어 완료 신호를 흉내내는 임시 타이머.
   // API 나오면 폴링 완료 콜백으로 교체하고 이 useEffect는 제거할 것.
   useEffect(() => {
+    if (!hasResultScreen) return;
     const timer = setTimeout(() => {
       router.replace({
         pathname: "/ai-reviewer/document-result",
@@ -79,7 +83,7 @@ export default function AnalyzingScreen() {
       });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [documentType, router]);
+  }, [documentType, hasResultScreen, router]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F7FC]">
@@ -94,7 +98,7 @@ export default function AnalyzingScreen() {
           서류를 분석하고 있어요
         </Text>
         {/* 타이틀 ↔ 서브텍스트 8px. Body-s 프리셋은 weight 400이라 스펙(600)과 달라 직접 지정 */}
-        <Text className="mt-2 text-center font-pretendard text-14 font-semibold leading-[22px] text-gray-600">
+        <Text className="mt-2 text-center font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-600">
           건물 정보와 소유주를 확인하는 중..
         </Text>
 

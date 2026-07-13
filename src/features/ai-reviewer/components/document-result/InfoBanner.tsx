@@ -32,7 +32,7 @@ export default function InfoBanner({ icon, text, variant = "positive" }: Props) 
         }}
       />
       <Text
-        className={`flex-1 font-pretendard text-14 font-semibold leading-[22px] ${
+        className={`flex-1 font-pretendard-semibold text-14 font-semibold leading-[22px] ${
           isNegative ? "text-secondary-500" : "text-primary-500"
         }`}
       >

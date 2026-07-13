@@ -50,7 +50,7 @@ export default function BottomSheet({ items }: Props) {
             className="h-6 w-6"
             resizeMode="contain"
           />
-          <Text className="font-pretendard text-16 font-medium leading-6 text-gray-900">
+          <Text className="font-pretendard-medium text-16 font-medium leading-6 text-gray-900">
             {item.label}
           </Text>
         </Pressable>

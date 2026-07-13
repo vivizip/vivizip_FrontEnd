@@ -26,7 +26,7 @@ export default function InfoRow({ icon, label, lines, size = "fixed" }: Props) {
         <Image source={icon} className="h-4 w-4" resizeMode="contain" />
       </View>
       <View className="flex-1 flex-col items-start gap-1">
-        <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-500">
+        <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-500">
           {label}
         </Text>
         <View

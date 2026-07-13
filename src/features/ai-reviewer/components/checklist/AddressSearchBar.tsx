@@ -26,7 +26,7 @@ export default function AddressSearchBar({ onPress }: Props) {
         pointerEvents={onPress ? "none" : "auto"}
         // p-0: Android TextInput의 기본 상하 패딩 제거 (컨테이너 패딩이 높이를 결정하도록)
         // Figma: Label-m (Pretendard 14/500, lh 20), placeholder gray-400
-        className="flex-1 p-0 font-pretendard text-14 font-medium leading-5 text-gray-900"
+        className="flex-1 p-0 font-pretendard-medium text-14 font-medium leading-5 text-gray-900"
         placeholder="계약하려는 집 주소를 검색하세요"
         placeholderTextColor="#9FA5AF" // gray-400
         returnKeyType="search"

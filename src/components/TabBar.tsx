@@ -88,7 +88,7 @@ export default function TabBar({
                 />
               )}
               {/* Figma: Pretendard 12px 500, gray-900(#121619), line-height normal */}
-              <Text className="text-center font-pretendard text-12 font-semibold text-gray-900">
+              <Text className="text-center font-pretendard-semibold text-12 font-semibold text-gray-900">
                 {label}
               </Text>
             </Pressable>

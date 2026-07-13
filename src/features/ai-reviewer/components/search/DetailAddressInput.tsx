@@ -19,7 +19,7 @@ export default function DetailAddressInput({ value, onChangeText }: Props) {
       onChangeText={onChangeText}
       placeholder="상세 주소를 입력해주세요"
       placeholderTextColor="#BFC4CC" // gray-300
-      className="border-b border-gray-300 pb-2 font-pretendard text-16 font-medium leading-6 text-gray-600"
+      className="border-b border-gray-300 pb-2 font-pretendard-medium text-16 font-medium leading-6 text-gray-600"
     />
   );
 }

@@ -18,7 +18,7 @@ type Props = {
 export default function RecentSearchChips({ keywords, onRemove }: Props) {
   return (
     <View className="gap-3">
-      <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+      <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
         최근검색어
       </Text>
       <View className="flex-row flex-wrap gap-2">

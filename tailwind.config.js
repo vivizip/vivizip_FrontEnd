@@ -49,7 +49,12 @@ module.exports = {
       },
       fontFamily: {
         // expo-font config plugin은 파일명(확장자 제외)을 폰트 패밀리명으로 등록함
-        pretendard: ["PretendardVariable"],
+        // PretendardVariable.ttf(가변 폰트) 하나만으로는 Android가 font-weight를
+        // 해석하지 못해 전부 같은 굵기로 렌더링됨 - 굵기별 static 파일을 따로 등록해서 사용
+        pretendard: ["Pretendard-Regular"],
+        "pretendard-medium": ["Pretendard-Medium"],
+        "pretendard-semibold": ["Pretendard-SemiBold"],
+        "pretendard-bold": ["Pretendard-Bold"],
       },
       fontSize: {
         12: "12px",
@@ -66,76 +71,80 @@ module.exports = {
   plugins: [
     // 디자인 시스템 타이포그래피 (Figma) — text-<category>-<size> 로 사용
     plugin(function ({ addComponents }) {
-      const pretendard = "PretendardVariable";
+      // PretendardVariable 하나로는 Android에서 font-weight가 안 먹혀서
+      // 굵기별 static 패밀리를 직접 지정 (fontWeight도 함께 유지)
+      const regular = "Pretendard-Regular";
+      const medium = "Pretendard-Medium";
+      const semibold = "Pretendard-SemiBold";
       addComponents({
         ".text-headline-l": {
-          fontFamily: pretendard,
+          fontFamily: semibold,
           fontSize: "28px",
           fontWeight: "600",
           lineHeight: "36px",
         },
         ".text-headline-m": {
-          fontFamily: pretendard,
+          fontFamily: semibold,
           fontSize: "24px",
           fontWeight: "600",
           lineHeight: "32px",
         },
         ".text-headline-s": {
-          fontFamily: pretendard,
+          fontFamily: semibold,
           fontSize: "22px",
           fontWeight: "600",
           lineHeight: "30px",
         },
         ".text-title-l": {
-          fontFamily: pretendard,
+          fontFamily: semibold,
           fontSize: "20px",
           fontWeight: "600",
           lineHeight: "28px",
         },
         ".text-title-m": {
-          fontFamily: pretendard,
+          fontFamily: semibold,
           fontSize: "18px",
           fontWeight: "600",
           lineHeight: "26px",
         },
         ".text-title-s": {
-          fontFamily: pretendard,
+          fontFamily: medium,
           fontSize: "16px",
           fontWeight: "500",
           lineHeight: "24px",
         },
         ".text-body-l": {
-          fontFamily: pretendard,
+          fontFamily: medium,
           fontSize: "18px",
           fontWeight: "500",
           lineHeight: "26px",
         },
         ".text-body-m": {
-          fontFamily: pretendard,
+          fontFamily: medium,
           fontSize: "16px",
           fontWeight: "500",
           lineHeight: "24px",
         },
         ".text-body-s": {
-          fontFamily: pretendard,
+          fontFamily: regular,
           fontSize: "14px",
           fontWeight: "400",
           lineHeight: "22px",
         },
         ".text-label-l": {
-          fontFamily: pretendard,
+          fontFamily: semibold,
           fontSize: "16px",
           fontWeight: "600",
           lineHeight: "24px",
         },
         ".text-label-m": {
-          fontFamily: pretendard,
+          fontFamily: medium,
           fontSize: "14px",
           fontWeight: "500",
           lineHeight: "20px",
         },
         ".text-label-s": {
-          fontFamily: pretendard,
+          fontFamily: medium,
           fontSize: "12px",
           fontWeight: "500",
           lineHeight: "18px",

@@ -22,7 +22,7 @@ export default function CheckedItemsCard({ icon, title, items }: Props) {
   return (
     <View className="w-full flex-col items-start gap-4 rounded-2xl bg-[#F2F7FC] px-3 py-4 pb-10">
       <View className="w-full flex-col items-start gap-1">
-        <Text className="font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-800">
+        <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-800">
           {title}
         </Text>
         <View className="h-px w-full bg-gray-200" />
@@ -37,10 +37,10 @@ export default function CheckedItemsCard({ icon, title, items }: Props) {
               style={{ tintColor: "#2C74F2" }}
             />
             <View className="flex-1 flex-col items-start gap-0.5">
-              <Text className="font-pretendard text-14 font-semibold leading-[22px] text-gray-900">
+              <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
                 {item.title}
               </Text>
-              <Text className="font-pretendard text-12 font-medium leading-[18px] text-gray-500">
+              <Text className="font-pretendard-medium text-12 font-medium leading-[18px] text-gray-500">
                 {item.description}
               </Text>
             </View>

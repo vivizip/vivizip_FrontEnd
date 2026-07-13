@@ -35,7 +35,7 @@ export default function SearchResultItem({ result, query }: Props) {
 
   return (
     <View className="w-full flex-col items-start gap-1">
-      <Text className="font-pretendard text-14 font-semibold leading-[22px]">
+      <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px]">
         {segments.map((segment, index) => (
           <Text
             key={index}
@@ -45,7 +45,7 @@ export default function SearchResultItem({ result, query }: Props) {
           </Text>
         ))}
       </Text>
-      <Text className="font-pretendard text-12 font-semibold leading-[18px] text-gray-600">
+      <Text className="font-pretendard-semibold text-12 font-semibold leading-[18px] text-gray-600">
         {result.description}
       </Text>
     </View>

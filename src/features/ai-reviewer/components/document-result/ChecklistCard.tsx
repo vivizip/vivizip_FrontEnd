@@ -46,7 +46,7 @@ export default function ChecklistCard({
         <Text
           className={
             compact
-              ? "font-pretendard text-16 font-semibold leading-6 tracking-[-0.16px] text-[#191F28]"
+              ? "font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-[#191F28]"
               : "text-title-m text-gray-900"
           }
         >
