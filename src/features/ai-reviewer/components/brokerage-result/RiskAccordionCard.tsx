@@ -8,6 +8,7 @@ type Props = {
   label: string;
   statusText: string;
   description: string;
+  defaultExpanded?: boolean;
 };
 
 /**
@@ -20,8 +21,9 @@ export default function RiskAccordionCard({
   label,
   statusText,
   description,
+  defaultExpanded = true,
 }: Props) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
     <Pressable

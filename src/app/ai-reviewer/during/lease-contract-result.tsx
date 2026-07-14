@@ -13,7 +13,6 @@ const backIcon = require("../../../../assets/icons/ic_left.png");
 const cautionIcon = require("../../../../assets/icons/ic_caution_colored.png");
 const checkIcon = require("../../../../assets/icons/icon_check.png");
 
-// 시트가 화면 밖에서 시작하도록 하는 오프셋 (houses.tsx 케밥 시트와 동일 패턴)
 const SHEET_OFFSCREEN_Y = 400;
 const ANIMATION_DURATION = 280;
 
@@ -44,113 +43,108 @@ type ResultStep = {
 };
 
 /**
- * 중개대상물 확인 설명서 OCR 결과 4단계 고정 순서 (제목 기준):
- * 1. 건물 일치, 불법 여부를 확인했어요
- * 2. 계약자 정보와 근저당권 여부를 확인했어요
- * 3. 특약사항을 분석했어요
- * 4. 계약서 간 비용이 일치하는지 분석했어요
- * TODO(API 대기): 4단계는 아직 콘텐츠가 없어 미구현. 실제 분석 API 나오면 이 배열 전체를
- * 응답 데이터(+status)로 대체할 것. Figma 캡처가 없는 부분(각 단계 positive 문구,
- * 1/3단계 negative 위험 설명 등)은 전부 목업 텍스트.
+ * 임대차 계약서 OCR 결과 4단계 고정 순서:
+ * 1. 합의 금액과 기간의 일치성
+ * 2. 계약서 간 항목의 일치성
+ * 3. 집주인 신상과 서류상 일치성
+ * 4. 중개수수료 확인
+ * TODO(API 대기): 실제 분석 API가 붙으면 각 단계의 status/variant 데이터를 응답 데이터로 대체할 것.
  */
 const RESULT_STEPS: ResultStep[] = [
   {
     badgeLabel: "건축물대장과 일치여부",
     status: "positive",
     positive: {
-      title: "건물 일치, 불법 여부가 없어요",
-      subtitlePrefix: "건물 용도가 일치하고, 불법 건축물이 아니에요",
-      info: { label: "건물 용도", value: "이상 없음" },
+      title: "합의 금액과 기간의 일치성을 확인했어요",
+      subtitlePrefix: "건축물대장과 금액과 기간이 일치해요",
+      info: { label: "123만원", value: "이상없음" },
     },
     negative: {
-      title: "건물 일치, 불법 여부를 확인했어요",
-      subtitlePrefix: "건물 용도는 일치하지만, 불법 가능성이 있어요",
+      title: "합의 금액과 기간의 일치성을 확인했어요",
+      subtitlePrefix: "건축물대장과 ",
+      subtitleHighlight: "금액 또는 기간이 달라요",
       risk: {
-        label: "건물 불법 여부",
+        label: "합의 금액/기간",
         statusText: "위험, 확인이 필요해요",
         description:
-          "건물이 불법으로 증축되었거나 용도를 무단으로 변경한 경우, 강제 철거되거나 벌금이 부과될 수 있어요. 계약 전 반드시 확인이 필요해요.",
+          "계약서에 적힌 보증금, 월세, 계약기간이 건축물대장이나 합의 내용과 다르면 계약 전 집주인과 다시 확인해야 해요.",
       },
-      info: { label: "건물 용도", value: "이상 없음" },
+      info: { label: "123만원", value: "확인 필요" },
     },
   },
   {
-    badgeLabel: "등기부등본과 비교",
+    badgeLabel: "집주인과 합의한 내용 확인",
+    status: "negative",
+    positive: {
+      title: "계약서 간 항목의 일치성을 확인했어요",
+      subtitlePrefix: "특약사항에 적힌 기간 정보와 계약서 상 기간이 일치해요",
+      info: { label: "123만원", value: "이상없음" },
+    },
+    negative: {
+      title: "계약서 간 항목의 일치성을 확인했어요",
+      subtitlePrefix: "특약사항에 적힌 기간 정보와 계약서 상 ",
+      subtitleHighlight: "기간이 달라요",
+      risk: {
+        label: "계약기간",
+        statusText: "위험, 확인이 필요해요",
+        description:
+          "특약사항에 적힌 기간과 계약서 본문 기간이 다르면 계약 종료일이나 갱신 조건을 두고 분쟁이 생길 수 있어요. 계약 전 집주인과 기간을 다시 확인하세요.",
+      },
+      info: { label: "123만원", value: "이상없음" },
+    },
+  },
+  {
+    badgeLabel: "집주인 신상 확인",
     status: "positive",
     positive: {
-      title: "계약자와 근저당권 여부가 깨끗해요",
-      subtitlePrefix:
-        "전 서류와 비교한 결과, 소유자가 동일하고 근저당권 문제도 없어요",
+      title: "집주인 신상과 서류상 일치성을 확인했어요",
+      subtitlePrefix: "신분증, 등기부등본과 집주인이 일치해요",
       info: { label: "소유자", value: "김민숙/ 1976.01.20 (동일)" },
     },
     negative: {
-      title: "계약자와 근저당권 여부를 확인했어요",
-      subtitlePrefix: "전 서류와 비교한 결과, 소유자는 동일했지만 ",
-      subtitleHighlight: "근저당권 문제",
-      subtitleSuffix: "가 있어요",
+      title: "집주인 신상과 서류상 일치성을 확인했어요",
+      subtitlePrefix: "신분증, 등기부등본과 ",
+      subtitleHighlight: "집주인 정보가 달라요",
       risk: {
-        label: "근저당권 여부",
+        label: "집주인 정보",
         statusText: "위험, 확인이 필요해요",
         description:
-          "위험 비율이 60퍼센트 이상이면 위험한 것으로 측정해요. 집이 경매로 매각될 경우, 보증금의 전부를 돌려받지 못할 수 있어요.",
+          "계약서의 임대인 정보가 신분증이나 등기부등본과 다르면 대리 계약 여부와 위임장, 인감증명서 등을 반드시 확인해야 해요.",
       },
-      info: { label: "소유자", value: "김민숙/ 1976.01.20 (동일)" },
+      info: { label: "소유자", value: "김민숙/ 1976.01.20 (불일치)" },
     },
   },
   {
-    badgeLabel: "임대차 계약서 세부사항",
+    badgeLabel: "중개수수료",
     status: "positive",
     positive: {
-      title: "특약사항을 분석했어요",
-      subtitlePrefix: "특약문구의 구체성과 명의계좌, 영수증 정보를 확인했어요",
-      info: { label: "특약 조항", value: "이상 없음" },
+      title: "중개수수료를 확인하세요",
+      subtitlePrefix: "중개수수료는 보통 보증금의 n%예요",
+      info: { label: "중개수수료", value: "150,000원" },
     },
     negative: {
-      title: "특약사항에 확인이 필요해요",
-      subtitlePrefix: "특약문구가 모호하거나 ",
-      subtitleHighlight: "명의계좌 불일치",
-      subtitleSuffix: "가 있어요",
+      title: "중개수수료를 확인하세요",
+      subtitlePrefix: "중개수수료가 ",
+      subtitleHighlight: "법정 상한을 초과",
+      subtitleSuffix: "했을 수 있어요",
       risk: {
-        label: "특약 조항",
+        label: "중개수수료",
         statusText: "위험, 확인이 필요해요",
         description:
-          "특약 문구가 모호하면 나중에 분쟁이 생길 수 있어요. 계좌 명의가 임대인과 다르면 반드시 이유를 확인하고, 가능하면 임대인 명의 계좌로만 입금하세요.",
+          "중개수수료는 법으로 정한 상한 요율이 있어요. 상한을 초과해서 받았다면 초과분을 돌려받을 수 있으니 계약서와 영수증을 꼭 보관하세요.",
       },
-      info: { label: "특약 조항", value: "확인 필요" },
-    },
-  },
-  {
-    badgeLabel: "소유권 관련 사항",
-    status: "positive",
-    positive: {
-      title: "계약서 간 비용이 일치하는지 분석했어요",
-      subtitlePrefix: "계약서 간 월세, 관리비 등 비용이 일치하는지 확인했어요",
-      info: { label: "월세", value: "65만원 / 계약서 간 동일" },
-    },
-    negative: {
-      title: "계약서 간 비용이 일치하지 않아요",
-      subtitlePrefix: "계약서 간 ",
-      subtitleHighlight: "월세 금액에 차이",
-      subtitleSuffix: "가 있어요",
-      risk: {
-        label: "비용 불일치",
-        statusText: "위험, 확인이 필요해요",
-        description:
-          "계약서마다 적힌 월세나 관리비가 다르면 나중에 분쟁이 생길 수 있어요. 실제 지불할 금액을 집주인과 다시 한번 확인하세요.",
-      },
-      info: { label: "월세", value: "65만원 / 70만원 (불일치)" },
+      info: { label: "중개수수료", value: "150,000원" },
     },
   },
 ];
 
 /**
- * 중개대상물 확인 설명서 - 촬영한 서류 OCR/비교 결과 화면
- * (Figma node 934:9144, 934:8956, 934:9058)
- * - 촬영한 사진을 배경 전체에 깔고, 분석 결과 바텀시트가 아래에서 위로 슬라이드업
- * - "다음으로"를 누르면 같은 사진 위에서 바텀시트 내용만 다음 단계로 전환
- * TODO: 1/3 페이지 인디케이터, OCR 인식 영역 하이라이트 박스는 순수 장식이라 생략
+ * 임대차 계약서 - 촬영한 서류 OCR/비교 결과 바텀시트
+ * (Figma node 934:8628)
+ * - 중개대상물 확인 설명서 결과 화면과 같은 흐름
+ * - 1단계는 요청대로 "다음으로" 단일 버튼만 표시
  */
-export default function BrokerageResultScreen() {
+export default function LeaseContractResultScreen() {
   const router = useRouter();
   const { imageUri } = useLocalSearchParams<{ imageUri?: string }>();
   const sheetTranslateY = useRef(new Animated.Value(SHEET_OFFSCREEN_Y)).current;
@@ -177,17 +171,14 @@ export default function BrokerageResultScreen() {
   };
 
   const handleConfirm = () => {
-    router.replace({
-      pathname: "/ai-reviewer/document-result",
-      params: { documentType: "brokerage" },
-    });
+    router.back();
   };
 
   return (
     <View className="flex-1 bg-white">
       <SafeAreaView edges={["top"]}>
         <TopBar
-          title="중개대상물 확인 설명서"
+          title="임대차계약서"
           leftIcon={backIcon}
           onPressLeft={() => router.back()}
         />
@@ -237,6 +228,7 @@ export default function BrokerageResultScreen() {
                   label={variant.risk.label}
                   statusText={variant.risk.statusText}
                   description={variant.risk.description}
+                  defaultExpanded={false}
                 />
               </View>
             )}

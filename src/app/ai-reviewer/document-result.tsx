@@ -18,14 +18,17 @@ const backIcon = require("../../../assets/icons/ic_left.png");
 const profileIcon = require("../../../assets/icons/icon_profile.png");
 const calendarIcon = require("../../../assets/icons/lucide_calendar.png");
 const buildingIcon = require("../../../assets/icons/ic_building.png");
+const billsIcon = require("../../../assets/icons/ic_bills.png");
 const cautionIcon = require("../../../assets/icons/ic_caution_colored.png");
 const checkIcon = require("../../../assets/icons/ic_check_small.png");
 const checkBigIcon = require("../../../assets/icons/ic_check_big.png");
 const cautionBigIcon = require("../../../assets/icons/ic_caution_big.png");
 const aiIcon = require("../../../assets/icons/ic_ai.png");
+const xIcon = require("../../../assets/icons/ic_x.png");
 
 const REGISTRY_TABS = ["기본 정보", "위험 요소", "근저당"];
 const BUILDING_TABS = ["기본 정보", "위험 요소"];
+const BROKERAGE_TABS = ["기본 정보", "계약 사항"];
 
 type PositiveNegativeStatus = "positive" | "negative";
 
@@ -126,6 +129,62 @@ const BUILDING_RESULT = {
   },
 };
 
+const BROKERAGE_RESULT = {
+  ...MOCK_RESULT,
+  title: "중개대상물 확인설명서",
+  issuedAt: new Date(2026, 6, 8),
+  contract: {
+    period: "2026.02.16 ~ 2028.02.16",
+    maintenanceFee: "8만원 / 월",
+    includedFees: ["공용전기", "건물청소", "인터넷"],
+    excludedFees: ["가스", "수도"],
+    notice: "관리비에 포함되지 않은 비용은 월세와 별도로, 매달 내야 해요.",
+  },
+};
+
+function MaintenanceItemsCard() {
+  return (
+    <View className="w-full gap-2 rounded-[20px] bg-[#FAFAFD] px-4 pb-3 pt-4">
+      <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-[#191F28]">
+        관리비 포함항목
+      </Text>
+      <View className="h-px w-full bg-gray-100" />
+      <View className="w-full flex-row gap-3">
+        <View className="flex-1 gap-2">
+          {BROKERAGE_RESULT.contract.includedFees.map((item) => (
+            <View key={item} className="flex-row items-center gap-2">
+              <Image
+                source={checkIcon}
+                className="h-4 w-4"
+                resizeMode="contain"
+                style={{ width: 16, height: 16, tintColor: "#2C74F2" }}
+              />
+              <Text className="font-pretendard-medium text-14 font-medium leading-5 text-gray-600">
+                {item}
+              </Text>
+            </View>
+          ))}
+        </View>
+        <View className="flex-1 gap-1">
+          {BROKERAGE_RESULT.contract.excludedFees.map((item) => (
+            <View key={item} className="flex-row items-center gap-2">
+              <Image
+                source={xIcon}
+                className="h-4 w-4"
+                resizeMode="contain"
+                style={{ width: 16, height: 16, tintColor: "#EF5D70" }}
+              />
+              <Text className="font-pretendard-medium text-14 font-medium leading-5 text-secondary-400">
+                {item}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 /**
  * 등기부등본/건축물대장 공통 분석 결과 화면 (Figma node 727:8959).
  * analyzing.tsx와 마찬가지로 문서 종류와 무관하게 공유되는 화면.
@@ -133,11 +192,20 @@ const BUILDING_RESULT = {
 export default function DocumentResultScreen() {
   const router = useRouter();
   const { documentType = "registry" } = useLocalSearchParams<{
-    documentType?: "registry" | "building";
+    documentType?: "registry" | "building" | "brokerage";
   }>();
   const isBuilding = documentType === "building";
-  const result = isBuilding ? BUILDING_RESULT : MOCK_RESULT;
-  const tabs = isBuilding ? BUILDING_TABS : REGISTRY_TABS;
+  const isBrokerage = documentType === "brokerage";
+  const result = isBrokerage
+    ? BROKERAGE_RESULT
+    : isBuilding
+      ? BUILDING_RESULT
+      : MOCK_RESULT;
+  const tabs = isBrokerage
+    ? BROKERAGE_TABS
+    : isBuilding
+      ? BUILDING_TABS
+      : REGISTRY_TABS;
   const buildingViolation = isBuilding
     ? BUILDING_RESULT.buildingViolation
     : null;
@@ -145,12 +213,16 @@ export default function DocumentResultScreen() {
     ? BUILDING_RESULT.comparison
     : MOCK_RESULT.usage;
   const [activeIndex, setActiveIndex] = useState(0);
-  const markCompleted = useDocumentProgressStore((state) => state.markCompleted);
+  const markCompleted = useDocumentProgressStore(
+    (state) => state.markCompleted,
+  );
 
   // 이 화면에 도달했다는 건 발급/분석이 완료됐다는 뜻 - 계약전 체크리스트 항목을 완료 처리
   useEffect(() => {
-    markCompleted(isBuilding ? "building" : "register");
-  }, [isBuilding, markCompleted]);
+    markCompleted(
+      isBrokerage ? "brokerage" : isBuilding ? "building" : "register",
+    );
+  }, [isBrokerage, isBuilding, markCompleted]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -263,7 +335,34 @@ export default function DocumentResultScreen() {
           </View>
         )}
 
-        {activeIndex === 1 && !isBuilding && (
+        {activeIndex === 1 && isBrokerage && (
+          <View className="gap-7">
+            <View className="gap-7">
+              <InfoRow
+                icon={calendarIcon}
+                label="계약기간"
+                lines={[BROKERAGE_RESULT.contract.period]}
+                size="full"
+              />
+              <InfoRow
+                icon={billsIcon}
+                label="관리비"
+                lines={[BROKERAGE_RESULT.contract.maintenanceFee]}
+                size="full"
+              />
+            </View>
+
+            <MaintenanceItemsCard />
+
+            <InfoBanner
+              icon={aiIcon}
+              text={BROKERAGE_RESULT.contract.notice}
+              variant="negative"
+            />
+          </View>
+        )}
+
+        {activeIndex === 1 && !isBuilding && !isBrokerage && (
           <View className="gap-8">
             {result.riskFactors.status === "negative" ? (
               <>
@@ -321,7 +420,7 @@ export default function DocumentResultScreen() {
           </View>
         )}
 
-        {!isBuilding && activeIndex === 2 && (
+        {!isBuilding && !isBrokerage && activeIndex === 2 && (
           <View className="gap-8">
             <LoanRiskSection
               cautionIcon={cautionBigIcon}

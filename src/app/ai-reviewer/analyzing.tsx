@@ -69,11 +69,11 @@ export default function AnalyzingScreen() {
   }>();
   console.log("[Analyzing] received imageUri:", imageUri);
 
-  // 결과 화면이 아직 없는 문서 종류(lease-contract)는 자동 이동하지 않음
   const hasResultScreen =
     documentType === "registry" ||
     documentType === "building" ||
-    documentType === "brokerage";
+    documentType === "brokerage" ||
+    documentType === "lease-contract";
 
   // TEST ONLY: 분석 API가 없어 완료 신호를 흉내내는 임시 타이머.
   // API 나오면 폴링 완료 콜백으로 교체하고 이 useEffect는 제거할 것.
@@ -83,6 +83,13 @@ export default function AnalyzingScreen() {
       if (documentType === "brokerage") {
         router.replace({
           pathname: "/ai-reviewer/during/brokerage-result",
+          params: { imageUri },
+        });
+        return;
+      }
+      if (documentType === "lease-contract") {
+        router.replace({
+          pathname: "/ai-reviewer/during/lease-contract-result",
           params: { imageUri },
         });
         return;

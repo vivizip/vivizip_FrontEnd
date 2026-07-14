@@ -30,6 +30,9 @@ export default function DocumentChecklist() {
   );
   const isBeforeComplete =
     completedItemIds.includes("register") && completedItemIds.includes("building");
+  const isDuringComplete =
+    completedItemIds.includes("brokerage") &&
+    completedItemIds.includes("lease-contract");
 
   const handlePressDocument = (itemId: string) => {
     if (itemId === "register") {
@@ -55,6 +58,11 @@ export default function DocumentChecklist() {
 
     if (itemId === "lease-contract") {
       router.push("/ai-reviewer/during/lease-contract-info");
+      return;
+    }
+
+    if (itemId === "condition-record") {
+      router.push("/ai-reviewer/after/move-in-record");
     }
   };
 
@@ -62,9 +70,12 @@ export default function DocumentChecklist() {
     <View>
       {DOCUMENT_STEPS.map((step, stepIndex) => {
         const isLastStep = stepIndex === DOCUMENT_STEPS.length - 1;
-        // 계약전은 등록된 집 유무로, 계약중은 계약전 완료 여부로 활성화된다
+        // 계약전은 등록된 집 유무로, 계약중은 계약전 완료 여부로,
+        // 계약후는 계약중 완료 여부로 활성화된다
         const isStepActive =
-          (stepIndex === 0 && hasHouse) || (stepIndex === 1 && isBeforeComplete);
+          (stepIndex === 0 && hasHouse) ||
+          (stepIndex === 1 && isBeforeComplete) ||
+          (stepIndex === 2 && isDuringComplete);
         const chipLabel = CHIP_LABEL_BY_STEP[step.id];
 
         return (
@@ -108,7 +119,8 @@ export default function DocumentChecklist() {
                     item.id === "register" ||
                     item.id === "building" ||
                     item.id === "brokerage" ||
-                    item.id === "lease-contract";
+                    item.id === "lease-contract" ||
+                    item.id === "condition-record";
 
                   return (
                     <DocumentItem
