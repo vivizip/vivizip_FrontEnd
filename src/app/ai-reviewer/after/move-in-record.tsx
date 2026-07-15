@@ -15,7 +15,6 @@ import { SCREEN_PADDING } from "../../../lib/layout";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 
-// TODO(API 대기): 아티클 3~4가 준비되면 route 채우고 실제 목록 API로 교체
 const RECOMMENDED_TIPS = [
   {
     title: "부동산 비용 관련 용어 정리",
@@ -26,6 +25,16 @@ const RECOMMENDED_TIPS = [
     title: "계약 시 확인할 서류 종류와 이유",
     date: "2026.07.01",
     route: "/ai-reviewer/after/article-documents" as const,
+  },
+  {
+    title: "입주 첫날, 집 사진을 꼭 찍어야 하는 이유",
+    date: "2026.07.04",
+    route: "/ai-reviewer/after/article-house-issues" as const,
+  },
+  {
+    title: "집에 문제가 생겼다면 누구에게 연락해야 할까요?",
+    date: "2026.07.10",
+    route: "/ai-reviewer/after/article-house-contacts" as const,
   },
 ];
 
