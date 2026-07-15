@@ -23,7 +23,7 @@ export default function TipCard({ title, date }: Props) {
           {title}
         </Text>
       </View>
-      <Text className="w-full text-right font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-400">
+      <Text className="w-full text-left font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-400">
         {date}
       </Text>
     </View>

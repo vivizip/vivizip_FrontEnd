@@ -51,10 +51,15 @@ module.exports = {
         // expo-font config plugin은 파일명(확장자 제외)을 폰트 패밀리명으로 등록함
         // PretendardVariable.ttf(가변 폰트) 하나만으로는 Android가 font-weight를
         // 해석하지 못해 전부 같은 굵기로 렌더링됨 - 굵기별 static 파일을 따로 등록해서 사용
+        "pretendard-thin": ["Pretendard-Thin"],
+        "pretendard-extralight": ["Pretendard-ExtraLight"],
+        "pretendard-light": ["Pretendard-Light"],
         pretendard: ["Pretendard-Regular"],
         "pretendard-medium": ["Pretendard-Medium"],
         "pretendard-semibold": ["Pretendard-SemiBold"],
         "pretendard-bold": ["Pretendard-Bold"],
+        "pretendard-extrabold": ["Pretendard-ExtraBold"],
+        "pretendard-black": ["Pretendard-Black"],
       },
       fontSize: {
         12: "12px",

@@ -38,9 +38,9 @@ export default function ChipM({
 }: Props) {
   return (
     <View
-      className={`h-7 flex-row items-center justify-center gap-1 self-start rounded-[100px] pl-3 pr-2 ${
-        bgClassName ?? "bg-gray-100"
-      }`}
+      className={`h-7 flex-row items-center justify-center gap-1 self-start rounded-[100px] ${
+        icon ? "pl-3 pr-2" : "px-3"
+      } ${bgClassName ?? "bg-gray-100"}`}
     >
       <Text
         className={`font-pretendard-semibold text-14 font-semibold leading-[22px] ${

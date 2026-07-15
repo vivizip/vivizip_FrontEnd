@@ -8,6 +8,7 @@ import Badge from "../../../components/Badge";
 import BottomSheet from "../../../components/BottomSheet";
 import RiskAccordionCard from "../../../features/ai-reviewer/components/brokerage-result/RiskAccordionCard";
 import ComparisonInfoRow from "../../../features/ai-reviewer/components/brokerage-result/ComparisonInfoRow";
+import { useDocumentProgressStore } from "../../../features/ai-reviewer/store/useDocumentProgressStore";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 const cautionIcon = require("../../../../assets/icons/ic_caution_colored.png");
@@ -151,6 +152,7 @@ export default function LeaseContractResultScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const step = RESULT_STEPS[stepIndex];
   const variant = step.status === "positive" ? step.positive : step.negative;
+  const markCompleted = useDocumentProgressStore((state) => state.markCompleted);
 
   useEffect(() => {
     Animated.timing(sheetTranslateY, {
@@ -171,7 +173,8 @@ export default function LeaseContractResultScreen() {
   };
 
   const handleConfirm = () => {
-    router.back();
+    markCompleted("lease-contract");
+    router.replace("/ai-reviewer");
   };
 
   return (

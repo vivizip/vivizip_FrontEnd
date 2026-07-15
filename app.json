@@ -54,10 +54,15 @@
         {
           "fonts": [
             "./assets/fonts/PretendardVariable.ttf",
+            "./assets/fonts/Pretendard-Thin.ttf",
+            "./assets/fonts/Pretendard-ExtraLight.ttf",
+            "./assets/fonts/Pretendard-Light.ttf",
             "./assets/fonts/Pretendard-Regular.ttf",
             "./assets/fonts/Pretendard-Medium.ttf",
             "./assets/fonts/Pretendard-SemiBold.ttf",
-            "./assets/fonts/Pretendard-Bold.ttf"
+            "./assets/fonts/Pretendard-Bold.ttf",
+            "./assets/fonts/Pretendard-ExtraBold.ttf",
+            "./assets/fonts/Pretendard-Black.ttf"
           ]
         }
       ],
@@ -68,6 +73,13 @@
         "react-native-document-scanner-plugin",
         {
           "cameraPermission": "서류 촬영을 위해 카메라 접근을 허용해주세요"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "입주 기록 사진 촬영을 위해 카메라 접근을 허용해주세요",
+          "photosPermission": "입주 기록 사진 첨부를 위해 사진 접근을 허용해주세요"
         }
       ]
     ],
