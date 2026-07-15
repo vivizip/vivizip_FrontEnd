@@ -18,8 +18,12 @@ type Props = {
  * - 하단에 폴더 탭 모양 그라데이션 배경 위에 주소 + 하자 칩(ChipS) 표시
  * - 누르면 상세 화면(move-in-record-detail)으로 이동
  */
+const MAX_VISIBLE_ISSUES = 3;
+
 export default function MoveInRecordCard({ record, onPress }: Props) {
   const extraCount = record.photoUris.length - 1;
+  const visibleIssues = record.issues.slice(0, MAX_VISIBLE_ISSUES);
+  const extraIssueCount = record.issues.length - MAX_VISIBLE_ISSUES;
 
   return (
     <Pressable
@@ -75,7 +79,7 @@ export default function MoveInRecordCard({ record, onPress }: Props) {
             {record.address}
           </Text>
           <View className="flex-row flex-wrap gap-1">
-            {record.issues.map((issue) => (
+            {visibleIssues.map((issue) => (
               <ChipS
                 key={issue}
                 label={issue}
@@ -83,6 +87,13 @@ export default function MoveInRecordCard({ record, onPress }: Props) {
                 textClassName="text-primary-500"
               />
             ))}
+            {extraIssueCount > 0 && (
+              <ChipS
+                label={`+${extraIssueCount}`}
+                bgClassName="bg-white"
+                textClassName="text-primary-500"
+              />
+            )}
           </View>
         </View>
       </View>

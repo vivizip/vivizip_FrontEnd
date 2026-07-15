@@ -12,6 +12,11 @@ const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: "oldest", label: "오래된 항목순으로 정렬" },
 ];
 
+const TRIGGER_LABELS: Record<SortOrder, string> = {
+  recent: "최신순",
+  oldest: "오래된 순",
+};
+
 type Props = {
   value: SortOrder;
   onChange: (value: SortOrder) => void;
@@ -51,7 +56,7 @@ export default function RecordSortMenu({ value, onChange }: Props) {
         accessibilityLabel="정렬 선택"
       >
         <Text className="font-pretendard-medium text-16 font-medium leading-6 text-gray-800">
-          최신순
+          {TRIGGER_LABELS[value]}
         </Text>
         <Image source={dropIcon} className="h-4 w-4" resizeMode="contain" />
       </Pressable>

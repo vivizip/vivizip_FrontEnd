@@ -6,13 +6,17 @@ export type MoveInRecord = {
   issues: string[];
   content: string;
   photoUris: string[];
+  createdAt: number;
 };
 
 type MoveInRecordState = {
   /** 작성된 입주 기록 목록 - 최신순으로 앞에 추가 */
   records: MoveInRecord[];
-  addRecord: (record: Omit<MoveInRecord, "id">) => void;
-  updateRecord: (id: string, updates: Partial<Omit<MoveInRecord, "id">>) => void;
+  addRecord: (record: Omit<MoveInRecord, "id" | "createdAt">) => void;
+  updateRecord: (
+    id: string,
+    updates: Partial<Omit<MoveInRecord, "id" | "createdAt">>,
+  ) => void;
   deleteRecord: (id: string) => void;
 };
 
@@ -24,9 +28,12 @@ type MoveInRecordState = {
 export const useMoveInRecordStore = create<MoveInRecordState>((set) => ({
   records: [],
   addRecord: (record) =>
-    set((state) => ({
-      records: [{ ...record, id: `${Date.now()}` }, ...state.records],
-    })),
+    set((state) => {
+      const now = Date.now();
+      return {
+        records: [{ ...record, id: `${now}`, createdAt: now }, ...state.records],
+      };
+    }),
   updateRecord: (id, updates) =>
     set((state) => ({
       records: state.records.map((record) =>

@@ -159,11 +159,11 @@ tailwind.config.js 참고
 
 ## 새 스토어
 
-- `src/features/ai-reviewer/store/useMoveInRecordStore.ts` — `records: MoveInRecord[]` (`id/address/issues/content/photoUris`), `addRecord`/`updateRecord`/`deleteRecord`. move-in-record 목록/작성/상세 화면이 서로 다른 라우트라서 상태 공유용으로 만듦. 기존 `useRegisteredHouseStore`/`useDocumentProgressStore`와 같은 패턴.
+- `src/features/ai-reviewer/store/useMoveInRecordStore.ts` — `records: MoveInRecord[]` (`id/address/issues/content/photoUris/createdAt`), `addRecord`/`updateRecord`/`deleteRecord`. move-in-record 목록/작성/상세 화면이 서로 다른 라우트라서 상태 공유용으로 만듦. 기존 `useRegisteredHouseStore`/`useDocumentProgressStore`와 같은 패턴. `createdAt`은 `id`처럼 `addRecord`가 내부에서 채우므로 호출부는 신경 안 써도 됨 — `RecordListSection`의 정렬(최신순/오래된순)이 이 값 기준으로 동작.
 
 ## 새 컴포넌트
 
-- `src/features/ai-reviewer/components/move-in-record/` — `HeroBanner`, `RecordListSection`, `RecordSortMenu`(정렬 드롭다운, `Modal`+`measureInWindow`로 트리거 위치 계산), `MoveInRecordCard`(사진 카드 + 폴더탭 배경), `PhotoPager`(스와이프 페이징 + `PageIndicator`), `RecordNameInput`, `IssueChipSelector`(재사용됨: 작성 화면은 title 노출, 상세/수정 화면은 `showTitle={false}`), `RecordContentInput`, `RecordPhotoPicker`, `RecommendedTipsSection`.
+- `src/features/ai-reviewer/components/move-in-record/` — `HeroBanner`, `RecordListSection`(records를 `sortOrder` 기준 `createdAt`으로 정렬 후 렌더), `RecordSortMenu`(정렬 드롭다운, `Modal`+`measureInWindow`로 트리거 위치 계산 - 트리거 라벨도 선택값에 따라 "최신순"/"오래된 순"으로 바뀜), `MoveInRecordCard`(사진 카드 + 폴더탭 배경, 하자 칩은 최대 3개만 보여주고 나머지는 `+N` 칩으로 표시), `PhotoPager`(스와이프 페이징 + `PageIndicator`), `RecordNameInput`, `IssueChipSelector`(재사용됨: 작성 화면은 title 노출, 상세/수정 화면은 `showTitle={false}`), `RecordContentInput`, `RecordPhotoPicker`, `RecommendedTipsSection`.
 - `src/features/ai-reviewer/components/move-in-report/` — `ReportMethodCard`, `ReportInfoRow`.
 - `src/components/PageIndicator.tsx` — 공통 페이지 인디케이터(Figma "icon_Page Indicator" 스펙: 프레임 42x42/rotate 90deg, active는 Primary Blue-400, non-active는 Gray-100, 4px 간격). 실제 시각적 점 크기는 8px로 별도 처리(Figma의 42px는 아이콘 컴포넌트의 터치 프레임이었고 실제 점은 훨씬 작음 — 스크린샷으로 직접 확인함).
 - `CTAButton.tsx`/`ChipM.tsx` — 기존 공통 컴포넌트에 override prop 추가(`heightClassName`/`radiusClassName`/`paddingClassName`/`widthClassName`/`fontsizeClassName`, `icon` 유무에 따른 padding 대칭 처리). 기존 호출부는 기본값이 원래 값 그대로라 영향 없음.
@@ -178,9 +178,17 @@ tailwind.config.js 참고
 
 - `brokerage-result.tsx`/`lease-contract-result.tsx`의 마지막 "확인" 버튼이 기존에는 `document-result` 화면을 거쳐서(그 화면의 mount effect로) 완료 처리됐는데, 이제 각자 직접 `markCompleted("brokerage")`/`markCompleted("lease-contract")` 호출 후 `/ai-reviewer`로 바로 복귀하도록 변경함. `document-result`는 아직 디자인 확정 전이라 이 두 플로우는 더 이상 그걸 거치지 않음.
 
+## 입주민 추천 콘텐츠 아티클 화면 추가
+
+- `src/features/ai-reviewer/components/article/ArticleScreen.tsx` — 아티클 공통 셸(히어로 이미지 → 제목/날짜/조회수 → 인트로 → `{children}` 번호 섹션 → 마치며 → 서비스 소개 → 좋아요 버튼). 서비스 소개(pitch) 문구는 모든 아티클에서 동일해서 셸에 고정. 하위 조각: `ArticleSection`/`ArticleParagraph`/`ArticleBulletList`.
+- `src/app/ai-reviewer/after/article-glossary.tsx`(부동산 비용 관련 용어 정리), `article-documents.tsx`(계약 시 확인할 서류 종류와 이유), `article-house-issues.tsx`(입주 첫날 집 사진을 꼭 찍어야 하는 이유), `article-house-contacts.tsx`(집에 문제가 생겼다면 누구에게 연락해야 할까요) — `move-in-record.tsx`의 "입주민 추천 콘텐츠" `TipCard`에서 `route`로 연결됨. 이미지 에셋은 `assets/images/img_article_<slug>_*.png` 네이밍으로 통일.
+- 좋아요 버튼: 처음엔 하트 아이콘 하나에 `color` prop만 바꾸는 방식이었다가, 사용자 요청으로 `icon_heart_empty.svg`/`icon_heart_filled.svg` 두 아이콘을 `liked` 상태에 따라 통째로 교체하는 방식으로 변경. `likeCount`는 항상 0부터 시작(이전엔 `initialLikeCount` prop으로 화면마다 다른 mock 값을 받았으나 제거함).
+- **Figma에서 내려받은 SVG 주의**: Figma가 내보낸 svg는 `fill="var(--fill-0, #272B33)"`처럼 CSS 커스텀 프로퍼티로 감싸는 경우가 있는데, `react-native-svg`는 `var()` 문법을 해석 못 해서 `"... is not a valid color or brush"` 경고가 뜨고 렌더링도 안 됨. 새 아이콘 svg를 추가할 때는 `fill`을 `currentColor`로 바꿔야 컴포넌트의 `color` prop이 실제로 먹힘 (`icon_heart_empty`/`icon_heart_filled`에서 확인).
+
 ## 미해결/후속 작업
 
 - `move-in-record-detail.tsx`의 "수정" 버튼으로 진입하는 편집 자체는 되지만, 사진 재촬영(카메라로 새로 추가) 액션은 아직 안 붙어있음(삭제만 가능).
 - `move-in-report.tsx`는 완료 처리 버튼이 Figma에 없어서 체크리스트 완료 상태와 연동 안 함.
 - `assets/icons/`에 사용자가 직접 추가한 미사용 아이콘 존재: `ic_boomerang.svg`, `ic_camera.svg`, `ic_gallery.svg`, `icon_edit s.svg`, `icon_notifi.svg` — 향후 어떤 화면에 쓰일지 확인 필요.
+- Figma 아티클 03(node `1179:15354`)·04(node `1179:15438`)는 구현 완료. 아티클 03의 사례 8("창문이 깨졌거나 방충망이 망가졌어요") 하단 "이렇게 예방하세요/해보세요" 목록은 Figma 원본 자체가 사례 4(전기 차단기)의 목록을 그대로 복붙해놓은 것으로 보임 — 코드는 Figma를 그대로 반영했으니, 디자인 쪽에서 원본을 고치면 그때 맞춰 갱신할 것.
 - 이 세션의 모든 코드 변경은 커밋 완료(로컬, `git log` 참고). 원격 push는 아직 안 함 — 사용자가 명시적으로 요청할 때만 진행.

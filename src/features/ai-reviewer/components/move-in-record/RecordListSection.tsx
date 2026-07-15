@@ -26,6 +26,11 @@ export default function RecordListSection({
 }: Props) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
   const hasRecords = records.length > 0;
+  const sortedRecords = [...records].sort((a, b) =>
+    sortOrder === "recent"
+      ? b.createdAt - a.createdAt
+      : a.createdAt - b.createdAt,
+  );
 
   return (
     <View className="w-full gap-4">
@@ -37,7 +42,7 @@ export default function RecordListSection({
       {hasRecords ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row gap-2">
-            {records.map((record) => (
+            {sortedRecords.map((record) => (
               <MoveInRecordCard
                 key={record.id}
                 record={record}
