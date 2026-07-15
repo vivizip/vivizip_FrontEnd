@@ -24,7 +24,6 @@ export default function ArticleGlossaryScreen() {
       views={620}
       intro="한국에서 집을 계약하다 보면 처음 듣는 부동산 용어가 많이 등장해요. 이때 계약서를 읽거나 중개사의 설명을 들을 때 내용을 이해하지 못하면 중요한 위험 요소를 놓칠 수도 있어요. 아래 용어들만 알아도 계약 과정을 훨씬 쉽게 이해할 수 있어요!"
       closingText="이번 편에서 부동산 금액과 관련된 기본 용어를 알아보았어요! 다음 편에서는 계약에 필요한 서류와 안전하게 계약하는 방법을 이해할 수 있는 방법을 소개할게요!"
-      initialLikeCount={6}
     >
       <ArticleSection
         number={1}

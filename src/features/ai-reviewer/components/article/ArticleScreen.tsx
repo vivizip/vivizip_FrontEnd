@@ -1,10 +1,18 @@
 import React, { useState } from "react";
-import { Image, Pressable, ScrollView, Text, View, type ImageSourcePropType } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import TopBar from "../../../../components/TopBar";
-import HeartIcon from "../../../../../assets/icons/icon_heart.svg";
+import HeartEmptyIcon from "../../../../../assets/icons/icon_heart_empty.svg";
+import HeartFilledIcon from "../../../../../assets/icons/icon_heart_filled.svg";
 
 const backIcon = require("../../../../../assets/icons/ic_left.png");
 
@@ -16,7 +24,6 @@ type Props = {
   views: number;
   intro: string;
   closingText: string;
-  initialLikeCount: number;
   children: React.ReactNode;
 };
 
@@ -33,12 +40,11 @@ export default function ArticleScreen({
   views,
   intro,
   closingText,
-  initialLikeCount,
   children,
 }: Props) {
   const router = useRouter();
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const [likeCount, setLikeCount] = useState(0);
 
   const handleToggleLike = () => {
     setLiked((prev) => !prev);
@@ -53,7 +59,11 @@ export default function ArticleScreen({
         onPressLeft={() => router.back()}
       />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <Image source={heroImage} className="h-[170px] w-full" resizeMode="cover" />
+        <Image
+          source={heroImage}
+          className="h-[170px] w-full"
+          resizeMode="cover"
+        />
 
         <View className="w-full gap-3 px-4 py-3">
           <View className="w-full gap-1">
@@ -129,11 +139,15 @@ export default function ArticleScreen({
             </Text>
             <Pressable
               onPress={handleToggleLike}
-              className="h-8 flex-row items-center gap-2 rounded-[500px] bg-gray-100 px-3 py-1.5 active:opacity-70"
+              className="flex-row items-center gap-2 rounded-[500px] bg-gray-100 px-3 py-1.5 active:opacity-70"
               accessibilityRole="button"
               accessibilityLabel="좋아요"
             >
-              <HeartIcon width={24} height={24} color={liked ? "#EF5D70" : "#272B33"} />
+              {liked ? (
+                <HeartFilledIcon width={24} height={24} color="#EF5D70" />
+              ) : (
+                <HeartEmptyIcon width={24} height={24} color="#272B33" />
+              )}
               <Text className="font-pretendard-semibold text-18 font-semibold leading-[26px] text-gray-800">
                 {likeCount}
               </Text>
