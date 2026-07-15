@@ -63,6 +63,11 @@ export default function DocumentChecklist() {
 
     if (itemId === "condition-record") {
       router.push("/ai-reviewer/after/move-in-record");
+      return;
+    }
+
+    if (itemId === "move-in-report") {
+      router.push("/ai-reviewer/after/move-in-report");
     }
   };
 
@@ -120,7 +125,8 @@ export default function DocumentChecklist() {
                     item.id === "building" ||
                     item.id === "brokerage" ||
                     item.id === "lease-contract" ||
-                    item.id === "condition-record";
+                    item.id === "condition-record" ||
+                    item.id === "move-in-report";
 
                   return (
                     <DocumentItem
