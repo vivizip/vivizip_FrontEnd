@@ -15,15 +15,17 @@ import { SCREEN_PADDING } from "../../../lib/layout";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 
-// TODO(API 대기): 실제 입주 기록 목록 API 나오기 전까지 Figma 목업과 동일한 정적 데이터 사용
+// TODO(API 대기): 아티클 3~4가 준비되면 route 채우고 실제 목록 API로 교체
 const RECOMMENDED_TIPS = [
   {
-    title: "입주 첫 날, 집 사진을 꼭 찍어야 하는 이유",
-    date: "2026.07.04",
+    title: "부동산 비용 관련 용어 정리",
+    date: "2026.06.24",
+    route: "/ai-reviewer/after/article-glossary" as const,
   },
   {
-    title: "집에 문제가 생겼다면 누구에게 연락해야 할까요",
-    date: "2026.07.06",
+    title: "계약 시 확인할 서류 종류와 이유",
+    date: "2026.07.01",
+    route: "/ai-reviewer/after/article-documents" as const,
   },
 ];
 
