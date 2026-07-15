@@ -16,11 +16,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import TopBar from "../../../components/TopBar";
 import ChipM from "../../../components/ChipM";
 import PhotoPager from "../../../features/ai-reviewer/components/move-in-record/PhotoPager";
+import IssueChipSelector from "../../../features/ai-reviewer/components/move-in-record/IssueChipSelector";
 import { useMoveInRecordStore } from "../../../features/ai-reviewer/store/useMoveInRecordStore";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 const kebabIcon = require("../../../../assets/icons/ic_kebab.png");
-const closeIcon = require("../../../../assets/icons/ic_x.png");
 
 /**
  * 입주 기록 상세 확인 화면 (Figma node 1064:9818, "기록장 세부 확인")
@@ -55,8 +55,12 @@ export default function MoveInRecordDetailScreen() {
     setIsEditing(true);
   };
 
-  const handleRemoveIssue = (issue: string) => {
-    setEditedIssues((prev) => prev.filter((item) => item !== issue));
+  const handleToggleIssue = (issue: string) => {
+    setEditedIssues((prev) =>
+      prev.includes(issue)
+        ? prev.filter((item) => item !== issue)
+        : [...prev, issue],
+    );
   };
 
   const handleRemovePhoto = (uri: string) => {
@@ -178,20 +182,26 @@ export default function MoveInRecordDetailScreen() {
               )}
             </View>
 
-            <View className="w-full flex-row flex-wrap items-center justify-end gap-2.5 px-4 pb-3">
-              {(isEditing ? editedIssues : record.issues).map((issue) => (
-                <ChipM
-                  key={issue}
-                  label={issue}
-                  icon={isEditing ? closeIcon : undefined}
-                  onIconPress={
-                    isEditing ? () => handleRemoveIssue(issue) : undefined
-                  }
-                  bgClassName="bg-primary-100"
-                  textClassName="text-primary-500"
+            {isEditing ? (
+              <View className="w-full px-4">
+                <IssueChipSelector
+                  selected={editedIssues}
+                  onToggle={handleToggleIssue}
+                  showTitle={false}
                 />
-              ))}
-            </View>
+              </View>
+            ) : (
+              <View className="w-full flex-row flex-wrap items-center justify-end gap-2.5 px-4 pb-3">
+                {record.issues.map((issue) => (
+                  <ChipM
+                    key={issue}
+                    label={issue}
+                    bgClassName="bg-primary-100"
+                    textClassName="text-primary-500"
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
           {isEditing ? (

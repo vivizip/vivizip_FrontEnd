@@ -18,18 +18,26 @@ const ISSUE_OPTIONS = [
 type Props = {
   selected: string[];
   onToggle: (issue: string) => void;
+  /** false로 주면 안내 문구를 숨긴다 (기본 true) */
+  showTitle?: boolean;
 };
 
 /**
  * "집에 하자가 있다면 선택해주세요" 다중 선택 칩 섹션 (Figma node 1064:9792)
  * - 칩: 공통 ChipS, 기본 bg-gray-100/text-gray-800, 선택 시 bg-primary-500/text-white
  */
-export default function IssueChipSelector({ selected, onToggle }: Props) {
+export default function IssueChipSelector({
+  selected,
+  onToggle,
+  showTitle = true,
+}: Props) {
   return (
     <View className="w-full gap-2 my-6">
-      <Text className="w-full font-pretendard-semibold text-14 leading-[22px] text-gray-800">
-        집에 하자가 있다면 선택해주세요
-      </Text>
+      {showTitle && (
+        <Text className="w-full font-pretendard-semibold text-14 leading-[22px] text-gray-800">
+          집에 하자가 있다면 선택해주세요
+        </Text>
+      )}
       <View className="w-full flex-row flex-wrap gap-[7px]">
         {ISSUE_OPTIONS.map((issue) => {
           const isSelected = selected.includes(issue);
