@@ -8,9 +8,22 @@ import AddressSearchBar from "../../features/ai-reviewer/components/checklist/Ad
 import DocumentChecklist from "../../features/ai-reviewer/components/checklist/DocumentChecklist";
 import HouseSelector from "../../features/ai-reviewer/components/checklist/HouseSelector";
 import ReviewTip from "../../features/ai-reviewer/components/checklist/ReviewTip";
+import { useRegisteredHouseStore } from "../../features/ai-reviewer/store/useRegisteredHouseStore";
+import { useTutorialSeenStore } from "../../features/ai-reviewer/store/useTutorialSeenStore";
 
 export default function AiReviewerScreen() {
   const router = useRouter();
+  const hasHouse = useRegisteredHouseStore((state) => state.address !== null);
+  const tutorialSeen = useTutorialSeenStore((state) => state.seen);
+
+  // 집 미등록 + 이번 세션에서 튜토리얼을 아직 안 봤으면 튜토리얼 화면으로 안내
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasHouse && !tutorialSeen) {
+        router.push("/ai-reviewer/tutorial");
+      }
+    }, [hasHouse, tutorialSeen, router]),
+  );
 
   // 이 화면은 상단 배경이 파란색이라 상태바 아이콘을 흰색으로, 벗어나면 원복
   useFocusEffect(
