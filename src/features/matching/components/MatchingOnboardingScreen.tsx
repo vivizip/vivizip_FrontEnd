@@ -10,12 +10,22 @@ import MatchingOnboardingSchoolEmailStep, {
 } from "./MatchingOnboardingSchoolEmailStep";
 import MatchingOnboardingNationalityStep from "./MatchingOnboardingNationalityStep";
 import MatchingOnboardingGenderStep from "./MatchingOnboardingGenderStep";
-import type { MatchingGender, MatchingNationality, MatchingRole } from "../types";
+import MatchingOnboardingTimeSlotStep from "./MatchingOnboardingTimeSlotStep";
+import MatchingOnboardingKoreanLevelStep from "./MatchingOnboardingKoreanLevelStep";
+import MatchingOnboardingBudgetStep from "./MatchingOnboardingBudgetStep";
+import MatchingOnboardingFinishStep from "./MatchingOnboardingFinishStep";
+import type {
+  MatchingGender,
+  MatchingKoreanLevel,
+  MatchingNationality,
+  MatchingRole,
+} from "../types";
 
-// 지금까지 확인된 공용(서포터즈/유학생 공통) 단계 수 - 역할 선택 이후 실제로는
-// 서포터즈용/유학생용 단계가 더 이어질 예정이라 아직 정확한 전체 단계 수는 아님.
-// 그 화면들을 받으면 이 값과 진행률 계산을 다시 맞출 것.
-const KNOWN_SHARED_STEPS = 5;
+// 진행률바가 있는 단계 수. 0~4(환영/역할/이메일/국적/성별)는 공통이고, 5단계부터
+// 역할별로 갈린다 - 서포터즈는 시간대 선택(5)까지, 유학생은 한국어 수준(5)→예산(6)
+// →시간대 선택(7)까지 이어진 다음 똑같이 완료 화면으로 간다.
+const SUPPORTER_QUESTION_STEPS = 6;
+const STUDENT_QUESTION_STEPS = 8;
 
 // TODO(닉네임 연동 필요): 로그인 응답(KakaoLoginResponse.nickname)을 전역에서 조회할 방법이
 // 아직 없어 목업 표시. 사용자 정보 저장소가 생기면 실제 닉네임으로 교체할 것.
@@ -32,8 +42,10 @@ const MOCK_NICKNAME = "은수";
  * 진행률 바는 Figma 픽셀값이 단계마다 들쭉날쭉(여러 단계가 같은 값)해서 그대로 베끼지
  * 않고 (현재 단계+1)/KNOWN_SHARED_STEPS로 계산해서 쓴다.
  *
- * 1단계에서 고른 역할(서포터즈/유학생)에 따라 이 5단계 이후 화면이 갈릴 예정이나,
- * 아직 그 다음 화면 디자인을 받지 못해 공용 단계(환영/역할/이메일/국적/성별)까지만 구현함.
+ * 1단계에서 고른 역할(서포터즈/유학생)에 따라 5단계부터 화면이 갈린다:
+ * 서포터즈는 시간대 선택(5) 하나뿐이고, 유학생은 한국어 수준(5) → 예산(6) →
+ * 시간대 선택(7) 세 단계를 거친다. 마지막 시간대 선택 다음에는 두 역할 모두
+ * 동일한 완료 화면(FINISH_STEP)으로 이어진다.
  */
 export default function MatchingOnboardingScreen() {
   const router = useRouter();
@@ -44,8 +56,40 @@ export default function MatchingOnboardingScreen() {
   const [emailCode, setEmailCode] = useState("");
   const [nationality, setNationality] = useState<MatchingNationality>("korea");
   const [gender, setGender] = useState<MatchingGender | null>(null);
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState<Set<string>>(
+    new Set(),
+  );
+  const [koreanLevel, setKoreanLevel] = useState<MatchingKoreanLevel | null>(
+    null,
+  );
+  const [deposit, setDeposit] = useState(0);
+  const [rent, setRent] = useState(0);
 
-  const goNext = () => setStep((prev) => prev + 1);
+  const questionSteps =
+    role === "student" ? STUDENT_QUESTION_STEPS : SUPPORTER_QUESTION_STEPS;
+  const finishStep = questionSteps;
+
+  const toggleTimeSlot = (key: string) => {
+    setSelectedTimeSlots((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const isFinishStep = step === finishStep;
+
+  const goNext = () => {
+    if (isFinishStep) {
+      router.replace("/home");
+      return;
+    }
+    setStep((prev) => prev + 1);
+  };
   const goBack = () => {
     if (step === 0) {
       router.back();
@@ -54,74 +98,141 @@ export default function MatchingOnboardingScreen() {
     }
   };
 
-  const progress = (step + 1) / KNOWN_SHARED_STEPS;
+  const progress = isFinishStep ? 1 : (step + 1) / questionSteps;
 
-  const stepConfig = (() => {
-    switch (step) {
-      case 0:
-        return {
-          question: (
-            <>
-              안녕하세요{" "}
-              <Text className="text-primary-500">{MOCK_NICKNAME}</Text>님
-              {"\n"}부메랑에 합류하신 걸 환영해요
-            </>
-          ),
-          ctaActive: true,
-          content: <MatchingOnboardingWelcomeStep />,
-        };
-      case 1:
-        return {
-          question: "부메랑에서 맡은 역할을 선택해주세요",
-          ctaActive: role !== null,
-          content: (
-            <MatchingOnboardingRoleStep role={role} onSelectRole={setRole} />
-          ),
-        };
-      case 2:
-        return {
-          question: "학교 메일을 인증해주세요",
-          subtitle: "안전한 매칭을 위한 단계입니다",
-          ctaActive: emailPhase === "sent" && emailCode.trim().length > 0,
-          content: (
-            <MatchingOnboardingSchoolEmailStep
-              email={email}
-              onChangeEmail={setEmail}
-              phase={emailPhase}
-              onSendCode={() => {
-                setEmailPhase("sent");
-                setEmailCode("");
-              }}
-              code={emailCode}
-              onChangeCode={setEmailCode}
-              onResend={() => setEmailCode("")}
-            />
-          ),
-        };
-      case 3:
-        return {
-          question: "국적은 어디신가요?",
-          ctaActive: true,
-          content: (
-            <MatchingOnboardingNationalityStep
-              nationality={nationality}
-              onSelectNationality={setNationality}
-            />
-          ),
-        };
-      default:
-        return {
-          question: "성별은 무엇인가요?",
-          ctaActive: gender !== null,
-          content: (
-            <MatchingOnboardingGenderStep
-              gender={gender}
-              onSelectGender={setGender}
-            />
-          ),
-        };
-    }
-  })();
+  const stepConfig = isFinishStep
+    ? {
+        question: "매칭 준비가 완료되었어요",
+        subtitle: "부메랑 메이트 매칭까지는 2주 정도 소요돼요",
+        ctaActive: true,
+        ctaLabel: "완료",
+        content: <MatchingOnboardingFinishStep />,
+      }
+    : (() => {
+        switch (step) {
+          case 0:
+            return {
+              question: (
+                <>
+                  안녕하세요{" "}
+                  <Text className="text-primary-500">{MOCK_NICKNAME}</Text>님
+                  {"\n"}부메랑에 합류하신 걸 환영해요
+                </>
+              ),
+              ctaActive: true,
+              content: <MatchingOnboardingWelcomeStep />,
+            };
+          case 1:
+            return {
+              question: "부메랑에서 맡은 역할을 선택해주세요",
+              ctaActive: role !== null,
+              content: (
+                <MatchingOnboardingRoleStep
+                  role={role}
+                  onSelectRole={setRole}
+                />
+              ),
+            };
+          case 2:
+            return {
+              question: "학교 메일을 인증해주세요",
+              subtitle: "안전한 매칭을 위한 단계입니다",
+              ctaActive: emailPhase === "sent" && emailCode.trim().length > 0,
+              content: (
+                <MatchingOnboardingSchoolEmailStep
+                  email={email}
+                  onChangeEmail={setEmail}
+                  phase={emailPhase}
+                  onSendCode={() => {
+                    setEmailPhase("sent");
+                    setEmailCode("");
+                  }}
+                  code={emailCode}
+                  onChangeCode={setEmailCode}
+                  onResend={() => setEmailCode("")}
+                />
+              ),
+            };
+          case 3:
+            return {
+              question: "국적은 어디신가요?",
+              ctaActive: true,
+              content: (
+                <MatchingOnboardingNationalityStep
+                  nationality={nationality}
+                  onSelectNationality={setNationality}
+                />
+              ),
+            };
+          case 4:
+            return {
+              question: "성별은 무엇인가요?",
+              ctaActive: gender !== null,
+              content: (
+                <MatchingOnboardingGenderStep
+                  gender={gender}
+                  onSelectGender={setGender}
+                />
+              ),
+            };
+          case 5:
+            if (role === "student") {
+              return {
+                question: (
+                  <>
+                    한국어로 대화하는 것이{"\n"}어느 정도 편한가요?
+                  </>
+                ),
+                ctaActive: koreanLevel !== null,
+                content: (
+                  <MatchingOnboardingKoreanLevelStep
+                    level={koreanLevel}
+                    onSelectLevel={setKoreanLevel}
+                  />
+                ),
+              };
+            }
+            return {
+              question: "활동 가능한 시간대를 모두 선택해주세요",
+              subtitle: "겹치는 시간대를 우선적으로 매칭해드려요",
+              ctaActive: selectedTimeSlots.size > 0,
+              content: (
+                <MatchingOnboardingTimeSlotStep
+                  selected={selectedTimeSlots}
+                  onToggle={toggleTimeSlot}
+                />
+              ),
+            };
+          case 6:
+            // 유학생 전용(서포터즈는 finishStep이 6이라 위쪽 isFinishStep 분기에서 처리됨).
+            return {
+              question: "어떤 조건의 집을 찾고있나요?",
+              subtitle: "예산을 입력해주세요",
+              ctaActive: deposit > 0 && rent > 0,
+              content: (
+                <MatchingOnboardingBudgetStep
+                  deposit={deposit}
+                  rent={rent}
+                  onChangeDeposit={setDeposit}
+                  onChangeRent={setRent}
+                />
+              ),
+            };
+          default:
+            // 유학생 전용 마지막 질문 단계(7) - 서포터즈와 동일한 시간대 선택 화면 재사용.
+            return {
+              question: "활동 가능한 시간대를 모두 선택해주세요",
+              subtitle: "겹치는 시간대를 우선적으로 매칭해드려요",
+              ctaActive: selectedTimeSlots.size > 0,
+              content: (
+                <MatchingOnboardingTimeSlotStep
+                  selected={selectedTimeSlots}
+                  onToggle={toggleTimeSlot}
+                />
+              ),
+            };
+        }
+      })();
 
   return (
     <MatchingOnboardingStepShell
@@ -130,6 +241,7 @@ export default function MatchingOnboardingScreen() {
       subtitle={"subtitle" in stepConfig ? stepConfig.subtitle : undefined}
       onBack={goBack}
       ctaActive={stepConfig.ctaActive}
+      ctaLabel={"ctaLabel" in stepConfig ? stepConfig.ctaLabel : undefined}
       onNext={goNext}
     >
       {stepConfig.content}

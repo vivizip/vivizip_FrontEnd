@@ -12,3 +12,6 @@ export type MatchingNationality =
   | "korea"
   | "nepal"
   | "indonesia";
+
+/** 유학생 분기 - 한국어 대화 편의 수준 */
+export type MatchingKoreanLevel = "greeting" | "daily" | "fluent";

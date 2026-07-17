@@ -3,7 +3,6 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -143,10 +142,7 @@ export default function MoveInRecordDetailScreen() {
         </Pressable>
       </Modal>
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView
           contentContainerStyle={{
             alignItems: "center",

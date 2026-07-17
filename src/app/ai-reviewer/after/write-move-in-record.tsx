@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -69,10 +69,7 @@ export default function WriteMoveInRecordScreen() {
         leftIcon={backIcon}
         onPressLeft={() => router.back()}
       />
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{

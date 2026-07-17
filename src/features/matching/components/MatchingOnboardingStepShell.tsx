@@ -14,6 +14,7 @@ type Props = {
   subtitle?: string;
   onBack: () => void;
   ctaActive: boolean;
+  ctaLabel?: string;
   onNext: () => void;
   children: React.ReactNode;
 };
@@ -34,6 +35,7 @@ export default function MatchingOnboardingStepShell({
   subtitle,
   onBack,
   ctaActive,
+  ctaLabel = "다음",
   onNext,
   children,
 }: Props) {
@@ -67,7 +69,7 @@ export default function MatchingOnboardingStepShell({
 
         <View className="w-full px-4 pb-3">
           <CTAButton
-            label="다음"
+            label={ctaLabel}
             active={ctaActive}
             onPress={onNext}
             heightClassName="h-11"
