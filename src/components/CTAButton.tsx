@@ -15,6 +15,10 @@ type Props = {
   paddingClassName?: string;
   /** 폰트 size tailwind 클래스 (기본 16px) */
   fontsizeClassName?: string;
+  /** 배경색 override (지정하면 active 여부와 무관하게 이 클래스를 사용) */
+  bgClassName?: string;
+  /** 텍스트색 override (지정하면 active 여부와 무관하게 이 클래스를 사용) */
+  textClassName?: string;
 };
 
 /**
@@ -34,13 +38,16 @@ export default function CTAButton({
   radiusClassName = "rounded-2xl",
   paddingClassName = "px-4",
   fontsizeClassName = "text-16",
+  bgClassName,
+  textClassName,
 }: Props) {
   return (
     <Pressable
       onPress={active ? onPress : undefined}
       disabled={!active}
       className={`${widthClassName} items-center justify-center font-semibold ${heightClassName} ${radiusClassName} ${paddingClassName} ${
-        active ? "bg-primary-500 active:opacity-80" : "bg-gray-100"
+        bgClassName ??
+        (active ? "bg-primary-500 active:opacity-80" : "bg-gray-100")
       }`}
       accessibilityRole="button"
       accessibilityState={{ disabled: !active }}
@@ -50,7 +57,7 @@ export default function CTAButton({
         numberOfLines={1}
         ellipsizeMode="tail"
         className={`text-center font-pretendard-semibold ${fontsizeClassName} font-semibold leading-6 tracking-[-0.16px] ${
-          active ? "text-white" : "text-gray-400"
+          textClassName ?? (active ? "text-white" : "text-gray-400")
         }`}
       >
         {label}
