@@ -11,32 +11,16 @@ import {
   useMoveInRecordStore,
   type MoveInRecord,
 } from "../../../features/ai-reviewer/store/useMoveInRecordStore";
+import { ARTICLES } from "../../../features/ai-reviewer/articles";
 import { SCREEN_PADDING } from "../../../lib/layout";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 
-const RECOMMENDED_TIPS = [
-  {
-    title: "부동산 비용 관련 용어 정리",
-    date: "2026.06.24",
-    route: "/ai-reviewer/after/article-glossary" as const,
-  },
-  {
-    title: "계약 시 확인할 서류 종류와 이유",
-    date: "2026.07.01",
-    route: "/ai-reviewer/after/article-documents" as const,
-  },
-  {
-    title: "입주 첫날, 집 사진을 꼭 찍어야 하는 이유",
-    date: "2026.07.04",
-    route: "/ai-reviewer/after/article-house-issues" as const,
-  },
-  {
-    title: "집에 문제가 생겼다면 누구에게 연락해야 할까요?",
-    date: "2026.07.10",
-    route: "/ai-reviewer/after/article-house-contacts" as const,
-  },
-];
+const RECOMMENDED_TIPS = ARTICLES.map(({ title, date, route }) => ({
+  title,
+  date,
+  route,
+}));
 
 /**
  * 입주 상태 기록 진입 화면 - 아직 작성된 기록이 없는 상태 (Figma node 1082:10171, "입주 기록 OFF")

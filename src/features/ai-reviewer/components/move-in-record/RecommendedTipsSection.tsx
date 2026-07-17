@@ -17,20 +17,23 @@ type Props = {
 
 /**
  * "입주민 추천 콘텐츠" 섹션 (Figma node 1082:10171) - 제목 + TipCard 리스트
+ * "입주민 추천 콘텐츠" -> "아티클 ZIP"으로 변경
  */
 export default function RecommendedTipsSection({ tips }: Props) {
   const router = useRouter();
 
   return (
     <View className="w-full gap-4">
-      <Text className="text-title-m text-gray-800">입주민 추천 콘텐츠</Text>
+      <Text className="text-title-m text-gray-800">아티클 ZIP</Text>
       <View className="w-full gap-2">
         {tips.map((tip) => (
           <TipCard
             key={tip.title}
             title={tip.title}
             date={tip.date}
-            onPress={tip.route ? () => router.push(tip.route as Href) : undefined}
+            onPress={
+              tip.route ? () => router.push(tip.route as Href) : undefined
+            }
           />
         ))}
       </View>
