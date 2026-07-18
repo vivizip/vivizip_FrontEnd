@@ -5,6 +5,8 @@ import {
   Text,
   View,
   type ImageSourcePropType,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 
 export type BottomSheetItem = {
@@ -18,6 +20,8 @@ type Props = {
   items?: BottomSheetItem[];
   /** 메뉴 리스트가 아닌 임의 콘텐츠를 넣고 싶을 때 - items 대신 사용 */
   children?: React.ReactNode;
+  /** 높이 제한(maxHeight)이 있는 부모 안에서 내부 스크롤이 필요할 때만 { flex: 1 } 등을 전달 */
+  style?: StyleProp<ViewStyle>;
 };
 
 /**
@@ -29,17 +33,20 @@ type Props = {
  *   아이콘 24x24 + 텍스트 Body-m(Pretendard 16/500, lh 24) gray-900
  * - children을 넘기면 리스트 대신 그 콘텐츠를 그대로 렌더링 (프레임 스타일은 공유)
  */
-export default function BottomSheet({ items, children }: Props) {
+export default function BottomSheet({ items, children, style }: Props) {
   return (
     <View
       className="w-full flex-col items-start gap-2 rounded-t-2xl bg-white px-4 pb-[80px] pt-6"
-      style={{
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.14,
-        shadowRadius: 10,
-        elevation: 10, // Android는 shadow* 대신 elevation 사용 (음수 offset 방향은 반영 안 됨)
-      }}
+      style={[
+        {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.14,
+          shadowRadius: 10,
+          elevation: 10, // Android는 shadow* 대신 elevation 사용 (음수 offset 방향은 반영 안 됨)
+        },
+        style,
+      ]}
     >
       {children ??
         items?.map((item, index) => (

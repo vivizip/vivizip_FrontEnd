@@ -187,7 +187,7 @@ export default function BoomerangBannerCard() {
                         key={row.label}
                         className="w-full flex-row items-center gap-4"
                       >
-                        <Text className="w-16 font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-500">
+                        <Text className="w-20 font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-500">
                           {row.label}
                         </Text>
                         <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-800">
@@ -197,7 +197,11 @@ export default function BoomerangBannerCard() {
                     ))}
                   </View>
 
-                  <CTAButton label="채팅하기" active onPress={handlePressChat} />
+                  <CTAButton
+                    label="채팅하기"
+                    active
+                    onPress={handlePressChat}
+                  />
                 </View>
               </BottomSheet>
             </Animated.View>

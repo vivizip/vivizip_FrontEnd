@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Dimensions,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -13,12 +14,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 import TopBar from "../../../../components/TopBar";
-import BottomSheet from "../../../../components/BottomSheet";
+import BottomSheet, {
+  type BottomSheetItem,
+} from "../../../../components/BottomSheet";
 import AppointmentSheet from "./AppointmentSheet";
 import LocationSearchSheet from "./LocationSearchSheet";
 import MapPreview from "./MapPreview";
+import CancelMatchSheet from "./CancelMatchSheet";
+import AttachmentMenu from "./AttachmentMenu";
 
 // 시트가 화면 밖에서 시작하도록 하는 충분히 큰 오프셋 (houses.tsx와 동일한 패턴)
 const SHEET_OFFSCREEN_Y = 400;
@@ -78,9 +84,26 @@ const calendarIcon = require("../../../../../assets/icons/lucide_calendar.png");
 const homeIcon = require("../../../../../assets/icons/ic_home_default.png");
 const sendIconOn = require("../../../../../assets/icons/ic_on_send.png");
 const sendIconOff = require("../../../../../assets/icons/ic_off_send.png");
+const profileIcon = require("../../../../../assets/icons/icon_profile.png");
+const xIcon = require("../../../../../assets/icons/ic_x.png");
 
-// TODO(1:1 매칭 미구현): 실제 매칭된 메이트 이름이 없어 목업으로 표시.
+// TODO(1:1 매칭 미구현): 실제 매칭된 메이트 정보가 없어 목업으로 표시.
+// BoomerangBannerCard의 메이트 확인 바텀시트와 같은 사람(값 동일)이다.
 const MATE_NAME = "킴 응우옌";
+const MOCK_MATE = {
+  school: "광운대학교 컴퓨터공학과",
+  nationality: "베트남 🇻🇳",
+  gender: "남자",
+  koreanLevel: "중급",
+  availableTime: "금요일 저녁, 주말 오후",
+};
+
+const MATE_INFO_ROWS: { label: string; value: string }[] = [
+  { label: "국적", value: MOCK_MATE.nationality },
+  { label: "성별", value: MOCK_MATE.gender },
+  { label: "한국어 수준", value: MOCK_MATE.koreanLevel },
+  { label: "편한 시간", value: MOCK_MATE.availableTime },
+];
 
 type TextMessage = {
   id: string;
@@ -89,6 +112,17 @@ type TextMessage = {
   sender: "me" | "mate";
   sentAt: Date;
 };
+
+type ImageMessage = {
+  id: string;
+  kind: "image";
+  uri: string;
+  sender: "me" | "mate";
+  sentAt: Date;
+};
+
+// 아바타/이름 헤더를 공유하는 일반 대화 메시지(텍스트 + 사진)
+type RegularMessage = TextMessage | ImageMessage;
 
 type AppointmentMessage = {
   id: string;
@@ -99,10 +133,14 @@ type AppointmentMessage = {
   sentAt: Date;
 };
 
-type ChatMessage = TextMessage | AppointmentMessage;
+type ChatMessage = RegularMessage | AppointmentMessage;
 
 type MessageGroup =
-  | { kind: "text"; sender: TextMessage["sender"]; messages: TextMessage[] }
+  | {
+      kind: "text";
+      sender: RegularMessage["sender"];
+      messages: RegularMessage[];
+    }
   | { kind: "appointment"; message: AppointmentMessage };
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
@@ -154,7 +192,11 @@ const groupMessages = (messages: ChatMessage[]): MessageGroup[] => {
     ) {
       lastGroup.messages.push(message);
     } else {
-      groups.push({ kind: "text", sender: message.sender, messages: [message] });
+      groups.push({
+        kind: "text",
+        sender: message.sender,
+        messages: [message],
+      });
     }
   });
   return groups;
@@ -230,11 +272,50 @@ export default function MateChatScreen() {
     useState("명동역 8번 출구");
   const appointmentSheet = useSlideUpSheet();
   const locationSheet = useSlideUpSheet();
+  const menuSheet = useSlideUpSheet();
+  const mateProfileSheet = useSlideUpSheet();
+  const cancelMatchSheet = useSlideUpSheet();
+  const [cancelReason, setCancelReason] = useState("");
+  const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const [attachMenuAnchor, setAttachMenuAnchor] = useState({
+    left: 0,
+    bottom: 0,
+  });
+  const attachButtonRef = useRef<View>(null);
 
   const handleSelectLocation = (location: string) => {
     setAppointmentLocation(location);
     locationSheet.close();
   };
+
+  const handlePressMateProfile = () => {
+    menuSheet.close();
+    mateProfileSheet.open();
+  };
+
+  const handlePressCancelMatch = () => {
+    menuSheet.close();
+    cancelMatchSheet.open();
+  };
+
+  // TODO(재매칭/매칭 취소 미구현): 실제 백엔드 연동 전까지 입력값 초기화 후 시트만 닫는다.
+  const handleConfirmRematch = () => {
+    setCancelReason("");
+    cancelMatchSheet.close();
+  };
+
+  const menuItems: BottomSheetItem[] = [
+    {
+      icon: profileIcon,
+      label: "부메랑 유저 프로필 보기",
+      onPress: handlePressMateProfile,
+    },
+    {
+      icon: xIcon,
+      label: "매칭 취소하기",
+      onPress: handlePressCancelMatch,
+    },
+  ];
 
   // 키보드가 올라올 때 대화 말풍선도 하단(최신 메시지)이 보이도록 스크롤한다.
   useEffect(() => {
@@ -249,12 +330,68 @@ export default function MateChatScreen() {
     if (!text) return;
     setMessages((prev) => [
       ...prev,
-      { id: `${Date.now()}`, kind: "text", text, sender: "me", sentAt: new Date() },
+      {
+        id: `${Date.now()}`,
+        kind: "text",
+        text,
+        sender: "me",
+        sentAt: new Date(),
+      },
     ]);
     setDraft("");
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     });
+  };
+
+  const openAttachMenu = () => {
+    attachButtonRef.current?.measureInWindow((x, y) => {
+      const windowHeight = Dimensions.get("window").height;
+      setAttachMenuAnchor({ left: x - 7, bottom: windowHeight - y - 8 });
+      setIsAttachMenuOpen(true);
+    });
+  };
+
+  const appendImageMessage = (uri: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}`,
+        kind: "image",
+        uri,
+        sender: "me",
+        sentAt: new Date(),
+      },
+    ]);
+    requestAnimationFrame(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    });
+  };
+
+  const handlePressCamera = async () => {
+    setIsAttachMenuOpen(false);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== ImagePicker.PermissionStatus.GRANTED) {
+      console.log("[MateChatScreen] camera permission denied");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+    if (!result.canceled && result.assets.length > 0) {
+      appendImageMessage(result.assets[0].uri);
+    }
+  };
+
+  const handlePressGallery = async () => {
+    setIsAttachMenuOpen(false);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== ImagePicker.PermissionStatus.GRANTED) {
+      console.log("[MateChatScreen] media library permission denied");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.8 });
+    if (!result.canceled && result.assets.length > 0) {
+      appendImageMessage(result.assets[0].uri);
+    }
   };
 
   const handleConfirmAppointment = () => {
@@ -284,8 +421,7 @@ export default function MateChatScreen() {
         leftIcon={backIcon}
         onPressLeft={() => router.replace("/chat")}
         rightIcon={kebabIcon}
-        // TODO(케밥 메뉴 미구현): 메뉴 항목/디자인이 아직 없어 아이콘만 표시
-        onPressRight={() => {}}
+        onPressRight={menuSheet.open}
       />
 
       <KeyboardAvoidingView className="flex-1" behavior="padding">
@@ -384,11 +520,19 @@ export default function MateChatScreen() {
                               key={message.id}
                               className="flex-row items-end gap-1"
                             >
-                              <View className="max-w-[226px] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl bg-gray-50 px-3 py-2">
-                                <Text className="font-pretendard-medium text-14 font-medium leading-5 text-gray-700">
-                                  {message.text}
-                                </Text>
-                              </View>
+                              {message.kind === "image" ? (
+                                <Image
+                                  source={{ uri: message.uri }}
+                                  className="h-[180px] w-[180px] rounded-2xl"
+                                  resizeMode="cover"
+                                />
+                              ) : (
+                                <View className="max-w-[226px] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl bg-gray-50 px-3 py-2">
+                                  <Text className="font-pretendard-medium text-14 font-medium leading-5 text-gray-700">
+                                    {message.text}
+                                  </Text>
+                                </View>
+                              )}
                               {showTime && (
                                 <Text className="font-pretendard text-12 leading-4 text-gray-600">
                                   {formatMessageTime(message.sentAt)}
@@ -421,11 +565,19 @@ export default function MateChatScreen() {
                             {formatMessageTime(message.sentAt)}
                           </Text>
                         )}
-                        <View className="max-w-[272px] rounded-tl-2xl rounded-bl-2xl rounded-br-2xl border border-gray-200 bg-white px-3 py-2">
-                          <Text className="font-pretendard-medium text-14 font-medium leading-5 text-gray-700">
-                            {message.text}
-                          </Text>
-                        </View>
+                        {message.kind === "image" ? (
+                          <Image
+                            source={{ uri: message.uri }}
+                            className="h-[180px] w-[180px] rounded-2xl"
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View className="max-w-[272px] rounded-tl-2xl rounded-bl-2xl rounded-br-2xl border border-gray-200 bg-white px-3 py-2">
+                            <Text className="font-pretendard-medium text-14 font-medium leading-5 text-gray-700">
+                              {message.text}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     );
                   })}
@@ -473,18 +625,20 @@ export default function MateChatScreen() {
 
           <View className="w-full flex-row items-end px-4 pb-2 pt-2.5">
             <View className="w-full flex-row items-end gap-2 rounded-3xl bg-gray-50 p-2">
-              {/* TODO(첨부 미구현): 사진/파일 첨부 기능 없이 버튼만 표시 */}
-              <Pressable
-                className="h-[34px] w-[34px] items-center justify-center rounded-full bg-white active:opacity-70"
-                accessibilityRole="button"
-                accessibilityLabel="첨부"
-              >
-                <Image
-                  source={plusIcon}
-                  className="h-6 w-6"
-                  resizeMode="contain"
-                />
-              </Pressable>
+              <View ref={attachButtonRef} collapsable={false}>
+                <Pressable
+                  onPress={openAttachMenu}
+                  className="h-[34px] w-[34px] items-center justify-center rounded-full bg-white active:opacity-70"
+                  accessibilityRole="button"
+                  accessibilityLabel="첨부"
+                >
+                  <Image
+                    source={plusIcon}
+                    className="h-6 w-6"
+                    resizeMode="contain"
+                  />
+                </Pressable>
+              </View>
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
@@ -514,6 +668,31 @@ export default function MateChatScreen() {
       </KeyboardAvoidingView>
 
       <Modal
+        visible={isAttachMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsAttachMenuOpen(false)}
+      >
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={() => setIsAttachMenuOpen(false)}
+        >
+          <View
+            style={{
+              position: "absolute",
+              left: attachMenuAnchor.left,
+              bottom: attachMenuAnchor.bottom,
+            }}
+          >
+            <AttachmentMenu
+              onPressCamera={handlePressCamera}
+              onPressGallery={handlePressGallery}
+            />
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
         visible={appointmentSheet.isMounted}
         transparent
         animationType="none"
@@ -533,7 +712,13 @@ export default function MateChatScreen() {
             }}
           />
           <Pressable
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
             onPress={appointmentSheet.close}
           />
           <Animated.View
@@ -576,7 +761,13 @@ export default function MateChatScreen() {
             }}
           />
           <Pressable
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
             onPress={locationSheet.close}
           />
           <Animated.View
@@ -586,6 +777,160 @@ export default function MateChatScreen() {
             }}
           >
             <LocationSearchSheet onSelect={handleSelectLocation} />
+          </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={menuSheet.isMounted}
+        transparent
+        animationType="none"
+        onRequestClose={menuSheet.close}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "#121619",
+              opacity: menuSheet.overlayOpacity,
+            }}
+          />
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            onPress={menuSheet.close}
+          />
+          <Animated.View
+            style={{ transform: [{ translateY: menuSheet.sheetTranslateY }] }}
+          >
+            <BottomSheet items={menuItems} />
+          </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={mateProfileSheet.isMounted}
+        transparent
+        animationType="none"
+        onRequestClose={mateProfileSheet.close}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "#121619",
+              opacity: mateProfileSheet.overlayOpacity,
+            }}
+          />
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            onPress={mateProfileSheet.close}
+          />
+          <Animated.View
+            style={{
+              transform: [{ translateY: mateProfileSheet.sheetTranslateY }],
+            }}
+          >
+            <BottomSheet>
+              <View className="w-full gap-6">
+                <View className="w-full flex-row items-center gap-3">
+                  <View className="h-[52px] w-[52px] rounded-full bg-[#E6E6EB]" />
+                  <View className="flex-1 gap-1">
+                    <Text className="font-pretendard-semibold text-16 font-semibold tracking-[-0.16px] text-black">
+                      {MATE_NAME}
+                    </Text>
+                    <Text className="font-pretendard text-12 leading-4 text-black">
+                      {MOCK_MATE.school}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="w-full gap-2">
+                  {MATE_INFO_ROWS.map((row) => (
+                    <View
+                      key={row.label}
+                      className="w-full flex-row items-center gap-4"
+                    >
+                      <Text className="w-20 font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-500">
+                        {row.label}
+                      </Text>
+                      <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-800">
+                        {row.value}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </BottomSheet>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={cancelMatchSheet.isMounted}
+        transparent
+        animationType="none"
+        onRequestClose={cancelMatchSheet.close}
+      >
+        {/* 시트 자체는 항상 하단에 고정. 키보드가 올라올 때 TextInput만 보이도록 올라오는
+            처리는 CancelMatchSheet 내부 ScrollView가 담당한다(시트/버튼 위치는 안 움직임). */}
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "#121619",
+              opacity: cancelMatchSheet.overlayOpacity,
+            }}
+          />
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            onPress={cancelMatchSheet.close}
+          />
+          <Animated.View
+            style={{
+              transform: [{ translateY: cancelMatchSheet.sheetTranslateY }],
+            }}
+          >
+            <BottomSheet>
+              <CancelMatchSheet
+                reason={cancelReason}
+                onChangeReason={setCancelReason}
+                onConfirmRematch={handleConfirmRematch}
+                onCancel={cancelMatchSheet.close}
+              />
+            </BottomSheet>
           </Animated.View>
         </View>
       </Modal>
