@@ -13,7 +13,7 @@ type Props = {
 
 /**
  * 온보딩 마지막 단계 (Figma node 1212:15044).
- * TODO(1:1 매칭 미구현): "친구 매칭하기"는 아직 라우트가 없어 일단 홈으로 이동.
+ * "친구 매칭하기"는 부메랑 신청 온보딩(/matching/onboarding)으로 이동한다.
  */
 export default function OnboardingFinishStep({
   onGoHome,

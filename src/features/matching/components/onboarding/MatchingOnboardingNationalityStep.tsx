@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
-import type { MatchingNationality } from "../types";
+import type { MatchingNationality } from "../../types";
 
 const NATIONALITIES: { id: MatchingNationality; label: string }[] = [
   { id: "vietnam", label: "베트남" },

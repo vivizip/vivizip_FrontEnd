@@ -1,7 +1,7 @@
 import React from "react";
 import { Image, View } from "react-native";
 
-const pigIllustration = require("../../../../assets/images/img_boomerang_pig.png");
+const pigIllustration = require("../../../../../assets/images/img_boomerang_pig.png");
 
 /**
  * 부메랑 신청 온보딩 - 환영 인사 콘텐츠 (Figma node 1879:30488, "온보딩 시작").

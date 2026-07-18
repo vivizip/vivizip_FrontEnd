@@ -3,11 +3,11 @@ import { Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import TopBar from "../../../components/TopBar";
-import CTAButton from "../../../components/CTAButton";
+import TopBar from "../../../../components/TopBar";
+import CTAButton from "../../../../components/CTAButton";
 
-const backIcon = require("../../../../assets/icons/ic_left.png");
-const boomerangIntroIllustration = require("../../../../assets/images/img_boomerang_intro.png");
+const backIcon = require("../../../../../assets/icons/ic_left.png");
+const boomerangIntroIllustration = require("../../../../../assets/images/img_boomerang_intro.png");
 
 /**
  * 홈 화면 "부메랑 신청하기"를 누르면 나오는 부메랑(1:1 매칭) 소개 화면 (Figma node 1588:21799).

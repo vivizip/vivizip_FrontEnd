@@ -1,8 +1,8 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
-import CheckIcon from "../../../../assets/icons/icon_check.svg";
-import type { MatchingKoreanLevel } from "../types";
+import CheckIcon from "../../../../../assets/icons/icon_check.svg";
+import type { MatchingKoreanLevel } from "../../types";
 
 const LEVELS: { id: MatchingKoreanLevel; label: string }[] = [
   { id: "greeting", label: "간단한 인사만 가능해요" },

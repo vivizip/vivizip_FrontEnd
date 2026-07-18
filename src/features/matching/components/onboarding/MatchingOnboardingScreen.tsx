@@ -14,12 +14,13 @@ import MatchingOnboardingTimeSlotStep from "./MatchingOnboardingTimeSlotStep";
 import MatchingOnboardingKoreanLevelStep from "./MatchingOnboardingKoreanLevelStep";
 import MatchingOnboardingBudgetStep from "./MatchingOnboardingBudgetStep";
 import MatchingOnboardingFinishStep from "./MatchingOnboardingFinishStep";
+import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
 import type {
   MatchingGender,
   MatchingKoreanLevel,
   MatchingNationality,
   MatchingRole,
-} from "../types";
+} from "../../types";
 
 // 진행률바가 있는 단계 수. 0~4(환영/역할/이메일/국적/성별)는 공통이고, 5단계부터
 // 역할별로 갈린다 - 서포터즈는 시간대 선택(5)까지, 유학생은 한국어 수준(5)→예산(6)
@@ -49,6 +50,7 @@ const MOCK_NICKNAME = "은수";
  */
 export default function MatchingOnboardingScreen() {
   const router = useRouter();
+  const markApplied = useMatchingApplicationStore((state) => state.markApplied);
   const [step, setStep] = useState(0);
   const [role, setRole] = useState<MatchingRole | null>(null);
   const [email, setEmail] = useState("");
@@ -85,6 +87,7 @@ export default function MatchingOnboardingScreen() {
 
   const goNext = () => {
     if (isFinishStep) {
+      markApplied();
       router.replace("/home");
       return;
     }

@@ -1,6 +1,6 @@
 import React from "react";
 
-import BoomerangIntroScreen from "../../features/matching/components/BoomerangIntroScreen";
+import BoomerangIntroScreen from "../../features/matching/components/onboarding/BoomerangIntroScreen";
 
 /**
  * 부메랑 소개 라우트 (Figma node 1588:21799).

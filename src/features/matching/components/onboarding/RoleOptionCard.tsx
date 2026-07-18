@@ -7,7 +7,7 @@ import {
   type ImageSourcePropType,
 } from "react-native";
 
-import CheckIcon from "../../../../assets/icons/icon_check.svg";
+import CheckIcon from "../../../../../assets/icons/icon_check.svg";
 
 type Props = {
   title: string;

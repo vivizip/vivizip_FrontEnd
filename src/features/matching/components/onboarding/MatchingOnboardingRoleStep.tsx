@@ -2,10 +2,10 @@ import React from "react";
 import { View } from "react-native";
 
 import RoleOptionCard from "./RoleOptionCard";
-import type { MatchingRole } from "../types";
+import type { MatchingRole } from "../../types";
 
-const supporterImage = require("../../../../assets/images/img_support_pig.png");
-const studentImage = require("../../../../assets/images/img_student_pig.png");
+const supporterImage = require("../../../../../assets/images/img_support_pig.png");
+const studentImage = require("../../../../../assets/images/img_student_pig.png");
 
 type Props = {
   role: MatchingRole | null;

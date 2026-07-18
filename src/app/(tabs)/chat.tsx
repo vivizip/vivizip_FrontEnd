@@ -1,7 +1,7 @@
 import React from "react";
 
-import PlaceholderScreen from "../../components/PlaceholderScreen";
+import ChatListScreen from "../../features/matching/components/chat/ChatListScreen";
 
 export default function ChatScreen() {
-  return <PlaceholderScreen title="채팅" />;
+  return <ChatListScreen />;
 }

@@ -2,11 +2,11 @@ import React from "react";
 import { KeyboardAvoidingView, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import TopBar from "../../../components/TopBar";
-import CTAButton from "../../../components/CTAButton";
+import TopBar from "../../../../components/TopBar";
+import CTAButton from "../../../../components/CTAButton";
 import MatchingOnboardingProgressBar from "./MatchingOnboardingProgressBar";
 
-const backIcon = require("../../../../assets/icons/ic_left.png");
+const backIcon = require("../../../../../assets/icons/ic_left.png");
 
 type Props = {
   progress: number;

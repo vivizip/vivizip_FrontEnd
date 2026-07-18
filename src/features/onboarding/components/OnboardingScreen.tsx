@@ -29,6 +29,7 @@ export default function OnboardingScreen() {
 
   const goNext = () => setStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1));
   const goHome = () => router.replace("/home");
+  const goMatchFriends = () => router.push("/matching/onboarding");
 
   switch (step) {
     case 0:
@@ -86,7 +87,10 @@ export default function OnboardingScreen() {
       );
     default:
       return (
-        <OnboardingFinishStep onGoHome={goHome} onMatchFriends={goHome} />
+        <OnboardingFinishStep
+          onGoHome={goHome}
+          onMatchFriends={goMatchFriends}
+        />
       );
   }
 }

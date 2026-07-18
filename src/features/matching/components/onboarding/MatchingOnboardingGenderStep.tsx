@@ -2,10 +2,10 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 
 import GenderOptionCard from "./GenderOptionCard";
-import type { MatchingGender } from "../types";
+import type { MatchingGender } from "../../types";
 
-const maleImage = require("../../../../assets/images/img_male_pig.png");
-const femaleImage = require("../../../../assets/images/img_female_pig.png");
+const maleImage = require("../../../../../assets/images/img_male_pig.png");
+const femaleImage = require("../../../../../assets/images/img_female_pig.png");
 
 type Props = {
   gender: MatchingGender | null;

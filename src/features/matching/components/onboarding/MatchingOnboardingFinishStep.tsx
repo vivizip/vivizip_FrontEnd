@@ -1,7 +1,7 @@
 import React from "react";
 import { Image, View } from "react-native";
 
-const finishPigIllustration = require("../../../../assets/images/img_boomerang_finish_pig.png");
+const finishPigIllustration = require("../../../../../assets/images/img_boomerang_finish_pig.png");
 
 /**
  * 부메랑 신청 온보딩 마지막 단계 콘텐츠 (Figma node 2305:34098, "온보딩 끝").

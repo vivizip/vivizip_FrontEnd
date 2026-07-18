@@ -1,6 +1,6 @@
 import React from "react";
 
-import MatchingOnboardingScreen from "../../features/matching/components/MatchingOnboardingScreen";
+import MatchingOnboardingScreen from "../../features/matching/components/onboarding/MatchingOnboardingScreen";
 
 /**
  * 부메랑 신청 온보딩 라우트 (Figma node 1879:30488).
