@@ -87,7 +87,7 @@ export default function MatchingOnboardingScreen() {
 
   const goNext = () => {
     if (isFinishStep) {
-      markApplied();
+      markApplied(role);
       router.replace("/home");
       return;
     }

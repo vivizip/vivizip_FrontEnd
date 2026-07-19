@@ -1,10 +1,10 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
-const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
-const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+export const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
+export const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
-const PERIODS = [
+export const PERIODS = [
   { key: "morning", label: "오전", range: "(8-11시)" },
   { key: "afternoon", label: "오후", range: "(12-17시)" },
   { key: "evening", label: "저녁", range: "(18-21시)" },
@@ -19,19 +19,23 @@ export const buildTimeSlotKey = (
 type Props = {
   selected: Set<string>;
   onToggle: (key: string) => void;
+  /** 바깥 프레임 클래스 override (기본값은 온보딩 스텝 레이아웃 기준 pt-16 포함) */
+  className?: string;
 };
 
 /**
  * 부메랑 신청 온보딩(서포터즈) - 활동 가능 시간대 선택 콘텐츠
  * (Figma node 1883:31244 미선택, 1883:31182 일부 선택 상태).
  * 요일×시간대 21칸을 터치로 개별 토글한다.
+ * 마이페이지 "나의 활동 시간대" 수정 바텀시트(TimeSlotEditSheet)에서도 그대로 재사용된다.
  */
 export default function MatchingOnboardingTimeSlotStep({
   selected,
   onToggle,
+  className = "w-full items-center px-4 pt-16",
 }: Props) {
   return (
-    <View className="w-full items-center px-4 pt-16">
+    <View className={className}>
       <View className="flex-row items-end justify-center gap-2">
         <View className="gap-1">
           {PERIODS.map((period) => (

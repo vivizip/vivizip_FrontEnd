@@ -25,6 +25,7 @@ import LocationSearchSheet from "./LocationSearchSheet";
 import MapPreview from "./MapPreview";
 import CancelMatchSheet from "./CancelMatchSheet";
 import AttachmentMenu from "./AttachmentMenu";
+import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
 
 // 시트가 화면 밖에서 시작하도록 하는 충분히 큰 오프셋 (houses.tsx와 동일한 패턴)
 const SHEET_OFFSCREEN_Y = 400;
@@ -258,6 +259,8 @@ const createMockMessages = (roomCreatedAt: Date): TextMessage[] => {
  */
 export default function MateChatScreen() {
   const router = useRouter();
+  const houseFoundAt = useMatchingApplicationStore((state) => state.houseFoundAt);
+  const markHouseFound = useMatchingApplicationStore((state) => state.markHouseFound);
   const [roomCreatedAt] = useState(() => new Date());
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     createMockMessages(roomCreatedAt),
@@ -605,9 +608,14 @@ export default function MateChatScreen() {
                   약속잡기
                 </Text>
               </Pressable>
-              {/* TODO(집 구하기 완료 처리 미구현): 부메랑 진행과정 상태 연동 없이 칩만 표시 */}
               <Pressable
-                className="h-8 flex-row items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 active:opacity-70"
+                onPress={markHouseFound}
+                disabled={houseFoundAt !== null}
+                className={`h-8 flex-row items-center justify-center gap-1.5 rounded-full border px-3 active:opacity-70 ${
+                  houseFoundAt
+                    ? "border-primary-500 bg-primary-500"
+                    : "border-gray-200 bg-white"
+                }`}
                 accessibilityRole="button"
                 accessibilityLabel="집 구하기 완료"
               >
@@ -615,8 +623,13 @@ export default function MateChatScreen() {
                   source={homeIcon}
                   className="h-4 w-4"
                   resizeMode="contain"
+                  style={houseFoundAt ? { tintColor: "#FFFFFF" } : undefined}
                 />
-                <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-800">
+                <Text
+                  className={`font-pretendard-semibold text-14 font-semibold leading-[22px] ${
+                    houseFoundAt ? "text-white" : "text-gray-800"
+                  }`}
+                >
                   집 구하기 완료
                 </Text>
               </Pressable>
