@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
-const RESEND_SECONDS = 180;
+const RESEND_SECONDS = 300;
 
 export type SchoolEmailPhase = "idle" | "sent";
 

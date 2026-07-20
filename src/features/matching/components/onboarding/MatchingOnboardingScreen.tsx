@@ -15,6 +15,7 @@ import MatchingOnboardingKoreanLevelStep from "./MatchingOnboardingKoreanLevelSt
 import MatchingOnboardingBudgetStep from "./MatchingOnboardingBudgetStep";
 import MatchingOnboardingFinishStep from "./MatchingOnboardingFinishStep";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
+import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
 import type {
   MatchingGender,
   MatchingKoreanLevel,
@@ -28,9 +29,9 @@ import type {
 const SUPPORTER_QUESTION_STEPS = 6;
 const STUDENT_QUESTION_STEPS = 8;
 
-// TODO(닉네임 연동 필요): 로그인 응답(KakaoLoginResponse.nickname)을 전역에서 조회할 방법이
-// 아직 없어 목업 표시. 사용자 정보 저장소가 생기면 실제 닉네임으로 교체할 것.
-const MOCK_NICKNAME = "은수";
+// TODO(내 정보 조회 API 미구현): 자동 로그인(토큰만 있고 로그인 응답이 없는 경우) 시
+// useAuthUserStore.user가 비어있을 수 있어 그 경우에만 fallback 문구를 쓴다.
+const FALLBACK_NICKNAME = "회원";
 
 /**
  * 부메랑 신청 온보딩 흐름 (환영 → 역할 선택 → 학교 메일 인증 → 국적 → 성별).
@@ -51,6 +52,8 @@ const MOCK_NICKNAME = "은수";
 export default function MatchingOnboardingScreen() {
   const router = useRouter();
   const markApplied = useMatchingApplicationStore((state) => state.markApplied);
+  const nickname =
+    useAuthUserStore((state) => state.user?.nickname) ?? FALLBACK_NICKNAME;
   const [step, setStep] = useState(0);
   const [role, setRole] = useState<MatchingRole | null>(null);
   const [email, setEmail] = useState("");
@@ -118,7 +121,7 @@ export default function MatchingOnboardingScreen() {
               question: (
                 <>
                   안녕하세요{" "}
-                  <Text className="text-primary-500">{MOCK_NICKNAME}</Text>님
+                  <Text className="text-primary-500">{nickname}</Text>님
                   {"\n"}부메랑에 합류하신 걸 환영해요
                 </>
               ),

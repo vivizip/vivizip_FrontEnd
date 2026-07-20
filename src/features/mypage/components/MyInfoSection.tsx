@@ -8,12 +8,15 @@ import {
   View,
   type ImageSourcePropType,
 } from "react-native";
+import { useRouter } from "expo-router";
 
 import EditIcon from "../../../../assets/icons/icon_edit s.svg";
 import CameraIcon from "../../../../assets/icons/ic_camera-bold.svg";
 import { useMatchingApplicationStore } from "../../matching/store/useMatchingApplicationStore";
 import { useMoveInRecordStore } from "../../ai-reviewer/store/useMoveInRecordStore";
+import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
 import BottomSheet from "../../../components/BottomSheet";
+import CTAButton from "../../../components/CTAButton";
 import LanguageSelectSheet, {
   type LanguageOption,
 } from "./LanguageSelectSheet";
@@ -47,11 +50,26 @@ const LANGUAGE_DISPLAY: Record<
   china: { code: "CN", flag: chinaFlag },
 };
 
-// TODO(1:1 매칭 백엔드 미구현): 실제 사용자 프로필 데이터가 없어 이름/국적/성별만 목업으로 표시.
-const MY_INFO = {
-  name: "응우옌",
-  nationality: "베트남",
-  gender: "여",
+const FALLBACK_NICKNAME = "회원";
+const FALLBACK_LABEL = "-";
+
+// GET /api/users/me의 nationality/gender/language는 예시값(KOREA/MALE/KOREAN)만 확인됐고
+// 전체 enum 목록은 미확인이라, 매핑에 없는 값이 오면 원본 문자열을 그대로 보여준다.
+const NATIONALITY_LABELS: Record<string, string> = {
+  KOREA: "한국",
+  VIETNAM: "베트남",
+  CHINA: "중국",
+};
+
+const GENDER_LABELS: Record<string, string> = {
+  MALE: "남",
+  FEMALE: "여",
+};
+
+const LANGUAGE_ENUM_TO_OPTION: Record<string, LanguageOption> = {
+  KOREAN: "korea",
+  VIETNAMESE: "vietnam",
+  CHINESE: "china",
 };
 
 // TODO(1:1 매칭 백엔드 미구현): 온보딩에서 실제로 고른 시간대를 조회할 방법이 없어 목업으로 표시.
@@ -67,16 +85,32 @@ const DEFAULT_SELECTED_TIME_SLOTS = new Set<string>([
  * 아바타 카메라 배지, 활동 시간대 편집 아이콘은 아직 인터랙션 없이 표시만 한다(디자인 상 실제 사진 변경 기능은 범위 밖).
  */
 export default function MyInfoSection() {
+  const router = useRouter();
   const role = useMatchingApplicationStore((state) => state.role);
   const houseFoundAt = useMatchingApplicationStore((state) => state.houseFoundAt);
   const matchCount = useMatchingApplicationStore((state) => state.matchCount);
   const recordCount = useMoveInRecordStore((state) => state.records.length);
+  const profile = useAuthUserStore((state) => state.user);
+  const nickname = profile?.nickname ?? FALLBACK_NICKNAME;
+  const nationalityLabel = profile?.nationality
+    ? (NATIONALITY_LABELS[profile.nationality] ?? profile.nationality)
+    : FALLBACK_LABEL;
+  const genderLabel = profile?.gender
+    ? (GENDER_LABELS[profile.gender] ?? profile.gender)
+    : FALLBACK_LABEL;
   const isSupporter = role === "supporter";
   const dDay = houseFoundAt
     ? Math.floor((Date.now() - houseFoundAt.getTime()) / MS_PER_DAY)
     : 0;
 
-  const [language, setLanguage] = useState<LanguageOption>("korea");
+  // 프로필의 language를 초기값으로만 쓰고(1회), 이후 시트에서 고른 값은 로컬 상태로만 관리한다
+  // (TODO(언어 변경 API 미구현): 실제로 서버에 반영하는 엔드포인트가 아직 없음).
+  const [language, setLanguage] = useState<LanguageOption>(
+    () =>
+      LANGUAGE_ENUM_TO_OPTION[
+        useAuthUserStore.getState().user?.language ?? ""
+      ] ?? "korea",
+  );
   const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
   const [isLanguageSheetMounted, setIsLanguageSheetMounted] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -204,6 +238,27 @@ export default function MyInfoSection() {
         </Pressable>
       </View>
 
+      {!profile ? (
+        <View
+          className="w-full gap-3 rounded-2xl bg-[#F2F7FC] px-4 py-3"
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.07,
+            shadowRadius: 2,
+            elevation: 2,
+          }}
+        >
+          <Text className="w-full text-center font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-600">
+            로그인이 필요합니다.
+          </Text>
+          <CTAButton
+            label="로그인"
+            active
+            onPress={() => router.push("/login")}
+          />
+        </View>
+      ) : (
       <View
         className="w-full gap-4 rounded-2xl bg-[#F2F7FC] px-4 py-3"
         style={{
@@ -216,7 +271,15 @@ export default function MyInfoSection() {
       >
         <View className="w-full flex-row items-center justify-center gap-2">
           <View className="h-[60px] w-[60px]">
-            <View className="h-[60px] w-[60px] items-center justify-center rounded-full bg-[#FAFAFD]" />
+            {profile.profileImage ? (
+              <Image
+                source={{ uri: profile.profileImage }}
+                className="h-[60px] w-[60px] rounded-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="h-[60px] w-[60px] items-center justify-center rounded-full bg-[#FAFAFD]" />
+            )}
             {/* TODO(프로필 사진 변경 미구현): Figma 상 배지만 존재, 실제 촬영/업로드 연결 없음 */}
             <View
               className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full bg-white"
@@ -234,7 +297,7 @@ export default function MyInfoSection() {
           <View className="gap-2">
             <View className="flex-row items-center gap-2">
               <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-800">
-                {MY_INFO.name}
+                {nickname}
               </Text>
               {isSupporter && (
                 <View className="items-center justify-center rounded-full bg-primary-500 px-3 py-0.5">
@@ -246,11 +309,11 @@ export default function MyInfoSection() {
             </View>
             <View className="flex-row items-center gap-2">
               <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-600">
-                {MY_INFO.nationality}
+                {nationalityLabel}
               </Text>
               <View className="h-3.5 w-px bg-gray-300" />
               <Text className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-600">
-                {MY_INFO.gender}
+                {genderLabel}
               </Text>
             </View>
           </View>
@@ -307,6 +370,7 @@ export default function MyInfoSection() {
           </View>
         </View>
       </View>
+      )}
     </View>
 
     <Modal

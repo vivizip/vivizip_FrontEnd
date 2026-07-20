@@ -5,12 +5,15 @@ import { useRouter } from "expo-router";
 
 import TopBar from "../../components/TopBar";
 import BottomSheet, { type BottomSheetItem } from "../../components/BottomSheet";
+import PopupS from "../../components/PopupS";
 import MyInfoSection from "../../features/mypage/components/MyInfoSection";
 import UniversityVerifySection from "../../features/mypage/components/UniversityVerifySection";
 import AccountSettingsSection from "../../features/mypage/components/AccountSettingsSection";
 import MyPageFooterLinks from "../../features/mypage/components/MyPageFooterLinks";
 import { clearTokens, getRefreshToken } from "../../lib/tokenStorage";
-import { logout } from "../../features/auth/services/authApi";
+import { logout, withdrawAccount } from "../../features/auth/services/authApi";
+import { useAuthUserStore } from "../../features/auth/store/useAuthUserStore";
+import { useToastStore } from "../../store/useToastStore";
 
 const kebabIcon = require("../../../assets/icons/ic_kebab.png");
 const logoutIcon = require("../../../assets/icons/ic_x.png");
@@ -30,6 +33,7 @@ export default function MyPageScreen() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuMounted, setIsMenuMounted] = useState(false);
+  const [isWithdrawConfirmOpen, setIsWithdrawConfirmOpen] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(SHEET_OFFSCREEN_Y)).current;
 
@@ -81,6 +85,21 @@ export default function MyPageScreen() {
       }
     }
     await clearTokens();
+    useAuthUserStore.getState().clearUser();
+    router.replace("/login");
+  };
+
+  const handleWithdraw = async () => {
+    setIsWithdrawConfirmOpen(false);
+    try {
+      await withdrawAccount();
+    } catch (err) {
+      console.log("[MyPage] Withdraw failed:", String(err));
+      useToastStore.getState().show("탈퇴에 실패했어요. 다시 시도해주세요.");
+      return;
+    }
+    await clearTokens();
+    useAuthUserStore.getState().clearUser();
     router.replace("/login");
   };
 
@@ -111,7 +130,9 @@ export default function MyPageScreen() {
           pushEnabled={pushEnabled}
           onChangePushEnabled={setPushEnabled}
         />
-        <MyPageFooterLinks />
+        <MyPageFooterLinks
+          onPressWithdraw={() => setIsWithdrawConfirmOpen(true)}
+        />
       </ScrollView>
 
       <Modal
@@ -140,6 +161,31 @@ export default function MyPageScreen() {
           <Animated.View style={{ transform: [{ translateY: sheetTranslateY }] }}>
             <BottomSheet items={menuItems} />
           </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isWithdrawConfirmOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsWithdrawConfirmOpen(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(18, 22, 25, 0.25)",
+          }}
+        >
+          <PopupS
+            title="정말 탈퇴하시겠어요?"
+            subtitle="탈퇴하면 계정 정보와 기록이 모두 사라지고 되돌릴 수 없어요"
+            cancelLabel="취소"
+            confirmLabel="탈퇴하기"
+            onCancel={() => setIsWithdrawConfirmOpen(false)}
+            onConfirm={handleWithdraw}
+          />
         </View>
       </Modal>
     </SafeAreaView>

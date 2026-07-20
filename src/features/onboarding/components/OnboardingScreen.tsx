@@ -22,9 +22,7 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    // TODO(테스트용 임시 비활성화): 로그인할 때마다 온보딩이 계속 뜨는지 확인하기 위해
-    // markOnboardingSeen() 호출을 잠시 꺼둠 - 테스트 끝나면 아래 줄 주석 해제할 것.
-    // markOnboardingSeen();
+    markOnboardingSeen();
   }, []);
 
   const goNext = () => setStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1));

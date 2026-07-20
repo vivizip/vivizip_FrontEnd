@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import CTAButton from "../../../../components/CTAButton";
+import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
 
 const checkIcon = require("../../../../../assets/icons/ic_check_small.png");
 
@@ -18,9 +19,8 @@ const checkIcon = require("../../../../../assets/icons/ic_check_small.png");
 // 이 값과 무관하게 항상 고정이고, 이 안에서만 내용이 스크롤된다.
 const SCROLL_VIEWPORT_HEIGHT = Dimensions.get("window").height * 0.4;
 
-// TODO(1:1 매칭 미구현): 실제 로그인 사용자 닉네임 조회 방법이 없어 목업으로 표시
-// (온보딩의 MOCK_NICKNAME과 동일한 값).
-const CURRENT_USER_NAME = "은수";
+// TODO(프로필 조회 실패 대비): getMyProfile 실패 등으로 user가 비어있을 때만 fallback 문구를 쓴다.
+const FALLBACK_USER_NAME = "회원";
 
 type Props = {
   reason: string;
@@ -45,6 +45,8 @@ export default function CancelMatchSheet({
   onCancel,
 }: Props) {
   const canSubmit = reason.trim().length > 0;
+  const currentUserName =
+    useAuthUserStore((state) => state.user?.nickname) ?? FALLBACK_USER_NAME;
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function CancelMatchSheet({
           <View className="w-full gap-4">
             <View className="w-full">
               <Text className="w-full font-pretendard-semibold text-18 font-semibold leading-[26px] text-gray-800">
-                {CURRENT_USER_NAME}님
+                {currentUserName}님
               </Text>
               <Text className="w-full font-pretendard-semibold text-18 font-semibold leading-[26px] text-gray-800">
                 정말 매칭을 취소하시겠어요?

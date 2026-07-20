@@ -14,6 +14,7 @@ import type { ApiEnvelope } from "../../../types/api";
 // 실제 로그인 엔드포인트 경로
 const KAKAO_LOGIN_ENDPOINT = "/api/auth/login/kakao";
 const LOGOUT_ENDPOINT = "/api/tokens/logout";
+const MY_PROFILE_ENDPOINT = "/api/users/me";
 
 // 성공 응답은 봉투 없이 평평한 구조로 온다 (2026-07-07 실제 응답으로 확인)
 export type KakaoLoginResponse = {
@@ -55,4 +56,30 @@ export const loginWithKakaoToken = async (
  */
 export const logout = async (refreshToken: string): Promise<void> => {
   await api.post(LOGOUT_ENDPOINT, { refreshToken });
+};
+
+// nationality/language/gender는 예시값(KOREA/KOREAN/MALE)만 확인됐고 전체 enum 목록은
+// 아직 미확인이라 string으로 느슨하게 받는다 (다른 값이 오면 화면에서 raw 값을 그대로 보여줌).
+export type MyProfileResponse = {
+  id: number;
+  email: string;
+  nickname: string;
+  profileImage: string | null;
+  role: string;
+  language: string;
+  nationality: string;
+  gender: string;
+  schoolId: number | null;
+  schoolVerified: boolean;
+};
+
+/** 로그인된 사용자의 내 프로필을 조회한다. */
+export const getMyProfile = async (): Promise<MyProfileResponse> => {
+  const { data } = await api.get<MyProfileResponse>(MY_PROFILE_ENDPOINT);
+  return data;
+};
+
+/** 회원탈퇴. 서버 계정을 삭제한다 (되돌릴 수 없음). */
+export const withdrawAccount = async (): Promise<void> => {
+  await api.delete(MY_PROFILE_ENDPOINT);
 };
