@@ -68,6 +68,8 @@ export const uploadAndAnalyzeBuildingLedger = async (
       {
         params: { leaseCaseId },
         headers: { "Content-Type": "multipart/form-data" },
+        // OCR+AI 분석이 걸리는 시간을 감안해 공용 인스턴스의 기본 10초보다 넉넉하게 설정
+        timeout: 60000,
       },
     );
     if (!data.result) {
