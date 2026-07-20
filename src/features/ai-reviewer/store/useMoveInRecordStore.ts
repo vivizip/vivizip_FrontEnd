@@ -1,47 +1,18 @@
 import { create } from "zustand";
 
-export type MoveInRecord = {
-  id: string;
-  address: string;
-  issues: string[];
-  content: string;
-  photoUris: string[];
-  createdAt: number;
-};
+import type { MoveInRecordListItem } from "../services/moveInRecordApi";
 
 type MoveInRecordState = {
-  /** 작성된 입주 기록 목록 - 최신순으로 앞에 추가 */
-  records: MoveInRecord[];
-  addRecord: (record: Omit<MoveInRecord, "id" | "createdAt">) => void;
-  updateRecord: (
-    id: string,
-    updates: Partial<Omit<MoveInRecord, "id" | "createdAt">>,
-  ) => void;
-  deleteRecord: (id: string) => void;
+  /** GET /api/move-in-records 최신 조회 결과. 마이페이지의 기록 수 표시와도 공유한다. */
+  records: MoveInRecordListItem[];
+  setRecords: (records: MoveInRecordListItem[]) => void;
 };
 
 /**
- * ai-reviewer/after/move-in-record.tsx(목록)와 write-move-in-record.tsx(작성),
- * move-in-record-detail.tsx(상세/수정)가 서로 다른 네비게이션 컨텍스트에 있어서
- * 기록을 공유하기 위한 스토어.
+ * ai-reviewer/after/move-in-record.tsx(목록)와 mypage의 MyInfoSection(기록 수 표시)이
+ * 서로 다른 네비게이션 컨텍스트에 있어서 최신 목록을 공유하기 위한 스토어.
  */
 export const useMoveInRecordStore = create<MoveInRecordState>((set) => ({
   records: [],
-  addRecord: (record) =>
-    set((state) => {
-      const now = Date.now();
-      return {
-        records: [{ ...record, id: `${now}`, createdAt: now }, ...state.records],
-      };
-    }),
-  updateRecord: (id, updates) =>
-    set((state) => ({
-      records: state.records.map((record) =>
-        record.id === id ? { ...record, ...updates } : record,
-      ),
-    })),
-  deleteRecord: (id) =>
-    set((state) => ({
-      records: state.records.filter((record) => record.id !== id),
-    })),
+  setRecords: (records) => set({ records }),
 }));

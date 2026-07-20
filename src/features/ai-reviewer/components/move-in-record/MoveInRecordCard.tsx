@@ -3,59 +3,47 @@ import { Image, Pressable, Text, View } from "react-native";
 
 import ChipS from "../../../../components/ChipS";
 import FolderTabBg from "../../../../../assets/images/img_record_folder_tab.svg";
-import type { MoveInRecord } from "../../store/useMoveInRecordStore";
 
 const FOLDER_HEIGHT = 116;
+const MAX_VISIBLE_ISSUES = 3;
+
+export type MoveInRecordCardData = {
+  id: number;
+  /** 등록된 집 주소 (API에는 기록별 이름 필드가 없어 leaseCaseId로 조회한 주소를 대신 씀) */
+  title: string;
+  thumbnailUrl: string | null;
+  issueLabels: string[];
+};
 
 type Props = {
-  record: MoveInRecord;
+  record: MoveInRecordCardData;
   onPress?: () => void;
 };
 
 /**
  * 입주 기록 카드 (Figma node 1078:9605, "입주 기록 ON")
- * - 280x325 사진 카드, 사진이 여러 장이면 우상단에 "+N장" 배지
+ * - 280x325 사진 카드
  * - 하단에 폴더 탭 모양 그라데이션 배경 위에 주소 + 하자 칩(ChipS) 표시
  * - 누르면 상세 화면(move-in-record-detail)으로 이동
+ * 목록 API가 사진 장수를 안 줘서 기존 "+N장" 배지는 표시하지 않는다.
  */
-const MAX_VISIBLE_ISSUES = 3;
-
 export default function MoveInRecordCard({ record, onPress }: Props) {
-  const extraCount = record.photoUris.length - 1;
-  const visibleIssues = record.issues.slice(0, MAX_VISIBLE_ISSUES);
-  const extraIssueCount = record.issues.length - MAX_VISIBLE_ISSUES;
+  const visibleIssues = record.issueLabels.slice(0, MAX_VISIBLE_ISSUES);
+  const extraIssueCount = record.issueLabels.length - MAX_VISIBLE_ISSUES;
 
   return (
     <Pressable
       onPress={onPress}
       className="h-[325px] w-[280px] overflow-hidden rounded-t-2xl rounded-b-3xl bg-gray-500"
       accessibilityRole="button"
-      accessibilityLabel={record.address}
+      accessibilityLabel={record.title}
     >
-      {record.photoUris[0] && (
+      {record.thumbnailUrl && (
         <Image
-          source={{ uri: record.photoUris[0] }}
+          source={{ uri: record.thumbnailUrl }}
           className="absolute inset-0 h-full w-full"
           resizeMode="cover"
         />
-      )}
-
-      {extraCount > 0 && (
-        <View
-          className="absolute right-2 top-2 rounded-2xl px-2.5 py-1"
-          style={{
-            backgroundColor: "rgba(242,247,252,0.8)",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-            elevation: 2,
-          }}
-        >
-          <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-600">
-            +{extraCount}장
-          </Text>
-        </View>
       )}
 
       <View
@@ -76,7 +64,7 @@ export default function MoveInRecordCard({ record, onPress }: Props) {
             numberOfLines={1}
             className="font-pretendard-semibold text-16 font-semibold tracking-[-0.16px] text-gray-800"
           >
-            {record.address}
+            {record.title}
           </Text>
           <View className="flex-row flex-wrap gap-1">
             {visibleIssues.map((issue) => (
