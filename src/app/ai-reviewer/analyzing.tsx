@@ -12,6 +12,8 @@ import { useRegisteredHouseStore } from "../../features/ai-reviewer/store/useReg
 import { useDocumentAnalysisStore } from "../../features/ai-reviewer/store/useDocumentAnalysisStore";
 import { uploadAndAnalyzeRegistry } from "../../features/ai-reviewer/services/registryDocumentApi";
 import { uploadAndAnalyzeBuildingLedger } from "../../features/ai-reviewer/services/buildingLedgerApi";
+import { uploadAndAnalyzeBrokerageDocument } from "../../features/ai-reviewer/services/brokerageDocumentApi";
+import { uploadAndAnalyzeLeaseContract } from "../../features/ai-reviewer/services/leaseContractDocumentApi";
 import { useToastStore } from "../../store/useToastStore";
 
 const FALLBACK_ANALYZE_ERROR = "서류 분석에 실패했어요. 다시 시도해주세요.";
@@ -84,6 +86,12 @@ export default function AnalyzingScreen() {
   const setBuildingLedgerAnalysis = useDocumentAnalysisStore(
     (state) => state.setBuildingLedgerAnalysis,
   );
+  const setBrokerageAnalysis = useDocumentAnalysisStore(
+    (state) => state.setBrokerageAnalysis,
+  );
+  const setLeaseContractAnalysis = useDocumentAnalysisStore(
+    (state) => state.setLeaseContractAnalysis,
+  );
 
   const hasResultScreen =
     documentType === "registry" ||
@@ -91,10 +99,14 @@ export default function AnalyzingScreen() {
     documentType === "brokerage" ||
     documentType === "lease-contract";
 
-  // 등기부등본/건축물대장을 사진 촬영으로 발급한 경우에만 실제 업로드+분석 API를 호출한다.
-  // (앱 발급 경로는 imageUri가 없어 아래 else 분기의 임시 타이머로 진행. brokerage/lease-contract는 아직 미연동)
+  // 등기부등본/건축물대장/중개대상물/임대차계약서를 사진 촬영으로 발급한 경우에만
+  // 실제 업로드+분석 API를 호출한다. (앱 발급 경로는 imageUri가 없어 아래 else 분기의
+  // 임시 타이머로 진행)
   const isRealUpload =
-    (documentType === "registry" || documentType === "building") &&
+    (documentType === "registry" ||
+      documentType === "building" ||
+      documentType === "brokerage" ||
+      documentType === "lease-contract") &&
     !!imageUri;
 
   useEffect(() => {
@@ -117,6 +129,32 @@ export default function AnalyzingScreen() {
           );
           if (cancelled) return;
           setBuildingLedgerAnalysis(result);
+          router.replace({
+            pathname: "/ai-reviewer/document-result",
+            params: { documentType },
+          });
+        } else if (documentType === "brokerage") {
+          const result = await uploadAndAnalyzeBrokerageDocument(
+            Number(currentHouseId),
+            imageUri as string,
+          );
+          if (cancelled) return;
+          setBrokerageAnalysis(result);
+          router.replace({
+            pathname: "/ai-reviewer/during/brokerage-result",
+            params: { imageUri },
+          });
+        } else if (documentType === "lease-contract") {
+          const result = await uploadAndAnalyzeLeaseContract(
+            Number(currentHouseId),
+            imageUri as string,
+          );
+          if (cancelled) return;
+          setLeaseContractAnalysis(result);
+          router.replace({
+            pathname: "/ai-reviewer/during/lease-contract-result",
+            params: { imageUri },
+          });
         } else {
           const result = await uploadAndAnalyzeRegistry(
             Number(currentHouseId),
@@ -124,11 +162,11 @@ export default function AnalyzingScreen() {
           );
           if (cancelled) return;
           setRegistryAnalysis(result);
+          router.replace({
+            pathname: "/ai-reviewer/document-result",
+            params: { documentType },
+          });
         }
-        router.replace({
-          pathname: "/ai-reviewer/document-result",
-          params: { documentType },
-        });
       } catch (err) {
         if (cancelled) return;
         if (isAxiosError(err)) {
@@ -156,7 +194,9 @@ export default function AnalyzingScreen() {
     imageUri,
     isRealUpload,
     router,
+    setBrokerageAnalysis,
     setBuildingLedgerAnalysis,
+    setLeaseContractAnalysis,
     setRegistryAnalysis,
   ]);
 
@@ -168,13 +208,6 @@ export default function AnalyzingScreen() {
       if (documentType === "brokerage") {
         router.replace({
           pathname: "/ai-reviewer/during/brokerage-result",
-          params: { imageUri },
-        });
-        return;
-      }
-      if (documentType === "lease-contract") {
-        router.replace({
-          pathname: "/ai-reviewer/during/lease-contract-result",
           params: { imageUri },
         });
         return;

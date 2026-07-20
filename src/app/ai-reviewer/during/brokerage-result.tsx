@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -9,155 +9,204 @@ import BottomSheet from "../../../components/BottomSheet";
 import RiskAccordionCard from "../../../features/ai-reviewer/components/brokerage-result/RiskAccordionCard";
 import ComparisonInfoRow from "../../../features/ai-reviewer/components/brokerage-result/ComparisonInfoRow";
 import { useDocumentProgressStore } from "../../../features/ai-reviewer/store/useDocumentProgressStore";
+import { useDocumentAnalysisStore } from "../../../features/ai-reviewer/store/useDocumentAnalysisStore";
+import type { BrokerageAnalysisResult } from "../../../features/ai-reviewer/services/brokerageDocumentApi";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 const cautionIcon = require("../../../../assets/icons/ic_caution_colored.png");
 const checkIcon = require("../../../../assets/icons/icon_check.png");
 
-// 시트가 화면 밖에서 시작하도록 하는 오프셋 (houses.tsx 케밥 시트와 동일 패턴)
 const SHEET_OFFSCREEN_Y = 400;
 const ANIMATION_DURATION = 280;
 
-type PositiveNegativeStatus = "positive" | "negative";
+type StepStatus = "positive" | "negative" | "neutral";
+
+type InfoRow = {
+  label: string;
+  value: string;
+};
 
 type StepVariant = {
   title: string;
   subtitlePrefix: string;
   subtitleHighlight?: string;
   subtitleSuffix?: string;
-  /** 없으면 위험 카드 미표시 (positive 상태) */
+  /** 없으면 위험 카드 미표시 */
   risk?: {
     label: string;
     statusText: string;
     description: string;
   };
-  info: {
-    label: string;
-    value: string;
-  };
+  infoRows: InfoRow[];
 };
 
 type ResultStep = {
   badgeLabel: string;
-  status: PositiveNegativeStatus;
+  status: StepStatus;
   positive: StepVariant;
-  negative: StepVariant;
+  /** negative 상태를 쓰지 않는 단계(중개수수료/보험확인)는 생략 */
+  negative?: StepVariant;
+  /** 등기부등본이 아직 없어 비교 전인 상태 */
+  neutral?: StepVariant;
+};
+
+const formatWon = (value: number) => `${value.toLocaleString("ko-KR")}원`;
+
+// POST /api/documents/brokerage-document/upload-analyze 응답이 없을 때(직접 접근 등)의
+// 안전한 기본값 - 실제 플로우에서는 analyzing.tsx가 항상 먼저 분석 결과를 저장해둔다.
+const FALLBACK_ANALYSIS: BrokerageAnalysisResult = {
+  basicInfo: { matchesRegistry: null, owner: "-", roadAddress: "-", regions: [] },
+  mortgage: { matchesRegistry: null, regions: [] },
+  liability: { regions: [] },
+  brokerageFee: null,
 };
 
 /**
- * 중개대상물 확인 설명서 OCR 결과 4단계 고정 순서 (제목 기준):
- * 1. 건물 일치, 불법 여부를 확인했어요
- * 2. 계약자 정보와 근저당권 여부를 확인했어요
- * 3. 특약사항을 분석했어요
- * 4. 계약서 간 비용이 일치하는지 분석했어요
- * TODO(API 대기): 4단계는 아직 콘텐츠가 없어 미구현. 실제 분석 API 나오면 이 배열 전체를
- * 응답 데이터(+status)로 대체할 것. Figma 캡처가 없는 부분(각 단계 positive 문구,
- * 1/3단계 negative 위험 설명 등)은 전부 목업 텍스트.
+ * 중개대상물 확인·설명서 OCR 결과 4단계 (Figma node 2813:21735, 2813:21860,
+ * 2813:21785, 2813:21827 순서 그대로):
+ * 1. 기본정보 확인 - 소유자·도로명주소 (basicInfo.matchesRegistry)
+ * 2. 근저당 확인 (mortgage.matchesRegistry)
+ * 3. 중개수수료 확인 (brokerageFee) - 법정 상한 안내는 항상 고정 문구,
+ *    실제 초과 여부를 판단할 데이터가 없어 상태 구분 없이 정보성으로만 노출
+ * 4. 배상책임보험 안내 (과실 피해 예방) - liability 데이터와 무관하게 항상 같은
+ *    안내 문구만 보여주는 정보성 단계 (Figma에 매칭/불일치 표현이 없음)
+ * matchesRegistry가 null이면(등기부등본 미등록) neutral 문구로 안내한다.
+ * negative(불일치) 카피는 Figma에 캡처가 없어 positive 카피와 같은 구조로 새로 작성함.
  */
-const RESULT_STEPS: ResultStep[] = [
-  {
-    badgeLabel: "건축물대장과 일치여부",
-    status: "positive",
+const buildResultSteps = (analysis: BrokerageAnalysisResult): ResultStep[] => {
+  const { basicInfo, mortgage, brokerageFee } = analysis;
+
+  const basicInfoStep: ResultStep = {
+    badgeLabel: "기본정보 확인",
+    status:
+      basicInfo.matchesRegistry === true
+        ? "positive"
+        : basicInfo.matchesRegistry === false
+          ? "negative"
+          : "neutral",
     positive: {
-      title: "건물 일치, 불법 여부가 없어요",
-      subtitlePrefix: "건물 용도가 일치하고, 불법 건축물이 아니에요",
-      info: { label: "건물 용도", value: "이상 없음" },
+      title: "소유자와 건물의 기본정보를 확인했어요",
+      subtitlePrefix: "기본 정보가 ",
+      subtitleHighlight: "등기부등본과 일치해요",
+      infoRows: [
+        { label: "소유자", value: basicInfo.owner || "-" },
+        { label: "도로명주소", value: basicInfo.roadAddress || "-" },
+      ],
     },
     negative: {
-      title: "건물 일치, 불법 여부를 확인했어요",
-      subtitlePrefix: "건물 용도는 일치하지만, 불법 가능성이 있어요",
+      title: "소유자와 건물의 기본정보를 확인했어요",
+      subtitlePrefix: "기본 정보가 ",
+      subtitleHighlight: "등기부등본과 일치하지 않아요",
       risk: {
-        label: "건물 불법 여부",
+        label: "소유자/주소 불일치",
         statusText: "위험, 확인이 필요해요",
         description:
-          "건물이 불법으로 증축되었거나 용도를 무단으로 변경한 경우, 강제 철거되거나 벌금이 부과될 수 있어요. 계약 전 반드시 확인이 필요해요.",
+          "등기부등본과 소유자나 주소가 다르면 실제 집주인이 맞는지, 정확한 매물인지 다시 확인해야 해요. 계약 전 반드시 공인중개사에게 이유를 물어보세요.",
       },
-      info: { label: "건물 용도", value: "이상 없음" },
+      infoRows: [
+        { label: "소유자", value: basicInfo.owner || "-" },
+        { label: "도로명주소", value: basicInfo.roadAddress || "-" },
+      ],
     },
-  },
-  {
-    badgeLabel: "등기부등본과 비교",
-    status: "positive",
+    neutral: {
+      title: "소유자와 건물의 기본정보를 확인했어요",
+      subtitlePrefix: "아직 등록된 등기부등본이 없어 비교하지 못했어요",
+      infoRows: [
+        { label: "소유자", value: basicInfo.owner || "-" },
+        { label: "도로명주소", value: basicInfo.roadAddress || "-" },
+      ],
+    },
+  };
+
+  const mortgageStep: ResultStep = {
+    badgeLabel: "근저당",
+    status:
+      mortgage.matchesRegistry === true
+        ? "positive"
+        : mortgage.matchesRegistry === false
+          ? "negative"
+          : "neutral",
     positive: {
-      title: "계약자와 근저당권 여부가 깨끗해요",
-      subtitlePrefix:
-        "전 서류와 비교한 결과, 소유자가 동일하고 근저당권 문제도 없어요",
-      info: { label: "소유자", value: "김민숙/ 1976.01.20 (동일)" },
+      title: "근저당권 여부를 확인했어요",
+      subtitlePrefix: "등기부등본과 비교한 결과, ",
+      subtitleHighlight: "근저당권 여부가 일치해요",
+      infoRows: [],
     },
     negative: {
-      title: "계약자와 근저당권 여부를 확인했어요",
-      subtitlePrefix: "전 서류와 비교한 결과, 소유자는 동일했지만 ",
-      subtitleHighlight: "근저당권 문제",
-      subtitleSuffix: "가 있어요",
+      title: "근저당권 여부를 확인했어요",
+      subtitlePrefix: "등기부등본과 비교한 결과, ",
+      subtitleHighlight: "근저당권 확인이 필요해요",
       risk: {
         label: "근저당권 여부",
         statusText: "위험, 확인이 필요해요",
         description:
           "위험 비율이 60퍼센트 이상이면 위험한 것으로 측정해요. 집이 경매로 매각될 경우, 보증금의 전부를 돌려받지 못할 수 있어요.",
       },
-      info: { label: "소유자", value: "김민숙/ 1976.01.20 (동일)" },
+      infoRows: [],
     },
-  },
-  {
-    badgeLabel: "임대차 계약서 세부사항",
+    neutral: {
+      title: "근저당권 여부를 확인했어요",
+      subtitlePrefix: "아직 등록된 등기부등본이 없어 비교하지 못했어요",
+      infoRows: [],
+    },
+  };
+
+  const brokerageFeeStep: ResultStep = {
+    badgeLabel: "중개 수수료 확인",
     status: "positive",
     positive: {
-      title: "특약사항을 분석했어요",
-      subtitlePrefix: "특약문구의 구체성과 명의계좌, 영수증 정보를 확인했어요",
-      info: { label: "특약 조항", value: "이상 없음" },
+      title: "중개수수료를 확인하세요",
+      subtitlePrefix:
+        "거래금액이 5천만원 이하일 시 최대 법적 수수료는 거래 금액의 0.6%로 한도액 25만원이에요",
+      infoRows: [
+        {
+          label: "중개수수료",
+          value: brokerageFee != null ? formatWon(brokerageFee) : "확인되지 않음",
+        },
+      ],
     },
-    negative: {
-      title: "특약사항에 확인이 필요해요",
-      subtitlePrefix: "특약문구가 모호하거나 ",
-      subtitleHighlight: "명의계좌 불일치",
-      subtitleSuffix: "가 있어요",
-      risk: {
-        label: "특약 조항",
-        statusText: "위험, 확인이 필요해요",
-        description:
-          "특약 문구가 모호하면 나중에 분쟁이 생길 수 있어요. 계좌 명의가 임대인과 다르면 반드시 이유를 확인하고, 가능하면 임대인 명의 계좌로만 입금하세요.",
-      },
-      info: { label: "특약 조항", value: "확인 필요" },
-    },
-  },
-  {
-    badgeLabel: "소유권 관련 사항",
+  };
+
+  const liabilityStep: ResultStep = {
+    badgeLabel: "과실 피해 예방",
     status: "positive",
     positive: {
-      title: "계약서 간 비용이 일치하는지 분석했어요",
-      subtitlePrefix: "계약서 간 월세, 관리비 등 비용이 일치하는지 확인했어요",
-      info: { label: "월세", value: "65만원 / 계약서 간 동일" },
+      title: "배상책임보험 부분 내용을 잘 확인하세요",
+      subtitlePrefix:
+        "배상책임보험 가입 여부를 확인하여 중개사의 과실로 피해가 발생할 경우 보상을 받을 수 있는지 확인합니다.",
+      infoRows: [],
     },
-    negative: {
-      title: "계약서 간 비용이 일치하지 않아요",
-      subtitlePrefix: "계약서 간 ",
-      subtitleHighlight: "월세 금액에 차이",
-      subtitleSuffix: "가 있어요",
-      risk: {
-        label: "비용 불일치",
-        statusText: "위험, 확인이 필요해요",
-        description:
-          "계약서마다 적힌 월세나 관리비가 다르면 나중에 분쟁이 생길 수 있어요. 실제 지불할 금액을 집주인과 다시 한번 확인하세요.",
-      },
-      info: { label: "월세", value: "65만원 / 70만원 (불일치)" },
-    },
-  },
-];
+  };
+
+  return [basicInfoStep, mortgageStep, brokerageFeeStep, liabilityStep];
+};
 
 /**
  * 중개대상물 확인 설명서 - 촬영한 서류 OCR/비교 결과 화면
- * (Figma node 934:9144, 934:8956, 934:9058)
+ * (Figma node 2813:21735, 2813:21860, 2813:21785, 2813:21827)
  * - 촬영한 사진을 배경 전체에 깔고, 분석 결과 바텀시트가 아래에서 위로 슬라이드업
  * - "다음으로"를 누르면 같은 사진 위에서 바텀시트 내용만 다음 단계로 전환
- * TODO: 1/3 페이지 인디케이터, OCR 인식 영역 하이라이트 박스는 순수 장식이라 생략
+ * TODO: regions(하이라이트 박스)는 아직 이미지 위에 그리지 않음 - 필요해지면 추가.
  */
 export default function BrokerageResultScreen() {
   const router = useRouter();
   const { imageUri } = useLocalSearchParams<{ imageUri?: string }>();
   const sheetTranslateY = useRef(new Animated.Value(SHEET_OFFSCREEN_Y)).current;
   const [stepIndex, setStepIndex] = useState(0);
-  const step = RESULT_STEPS[stepIndex];
-  const variant = step.status === "positive" ? step.positive : step.negative;
+  const brokerageAnalysis = useDocumentAnalysisStore(
+    (state) => state.brokerageAnalysis,
+  );
+  const resultSteps = useMemo(
+    () => buildResultSteps(brokerageAnalysis ?? FALLBACK_ANALYSIS),
+    [brokerageAnalysis],
+  );
+  const step = resultSteps[stepIndex];
+  const variant =
+    (step.status === "negative"
+      ? step.negative
+      : step.status === "neutral"
+        ? step.neutral
+        : step.positive) ?? step.positive;
   const markCompleted = useDocumentProgressStore((state) => state.markCompleted);
 
   useEffect(() => {
@@ -168,10 +217,10 @@ export default function BrokerageResultScreen() {
     }).start();
   }, [sheetTranslateY]);
 
-  const isLastStep = stepIndex === RESULT_STEPS.length - 1;
+  const isLastStep = stepIndex === resultSteps.length - 1;
 
   const handleNext = () => {
-    setStepIndex((prev) => Math.min(prev + 1, RESULT_STEPS.length - 1));
+    setStepIndex((prev) => Math.min(prev + 1, resultSteps.length - 1));
   };
 
   const handlePrevious = () => {
@@ -221,7 +270,13 @@ export default function BrokerageResultScreen() {
               <Text className="w-full font-pretendard-semibold text-12 font-semibold leading-[18px] text-gray-500">
                 {variant.subtitlePrefix}
                 {variant.subtitleHighlight ? (
-                  <Text className="text-secondary-500">
+                  <Text
+                    className={
+                      step.status === "negative"
+                        ? "text-secondary-500"
+                        : "text-primary-500"
+                    }
+                  >
                     {variant.subtitleHighlight}
                   </Text>
                 ) : null}
@@ -241,13 +296,18 @@ export default function BrokerageResultScreen() {
               </View>
             )}
 
-            <View className="mt-6 w-full">
-              <ComparisonInfoRow
-                icon={checkIcon}
-                label={variant.info.label}
-                value={variant.info.value}
-              />
-            </View>
+            {variant.infoRows.length > 0 && (
+              <View className="mt-6 w-full gap-2">
+                {variant.infoRows.map((row) => (
+                  <ComparisonInfoRow
+                    key={row.label}
+                    icon={checkIcon}
+                    label={row.label}
+                    value={row.value}
+                  />
+                ))}
+              </View>
+            )}
 
             {stepIndex === 0 ? (
               <Pressable

@@ -2,6 +2,8 @@ import { create } from "zustand";
 
 import type { RegistryAnalysisResult } from "../services/registryDocumentApi";
 import type { BuildingLedgerAnalysis } from "../services/buildingLedgerApi";
+import type { BrokerageAnalysisResult } from "../services/brokerageDocumentApi";
+import type { LeaseContractAnalysisResult } from "../services/leaseContractDocumentApi";
 
 type DocumentAnalysisState = {
   /** 등기부등본 업로드+분석(POST /api/documents/registry/upload-analyze) 결과. */
@@ -10,6 +12,12 @@ type DocumentAnalysisState = {
   /** 건축물대장 업로드+분석(POST /api/documents/building-ledger/upload-analyze) 결과. */
   buildingLedgerAnalysis: BuildingLedgerAnalysis | null;
   setBuildingLedgerAnalysis: (result: BuildingLedgerAnalysis) => void;
+  /** 중개대상물 확인·설명서 업로드+분석(POST /api/documents/brokerage-document/upload-analyze) 결과. */
+  brokerageAnalysis: BrokerageAnalysisResult | null;
+  setBrokerageAnalysis: (result: BrokerageAnalysisResult) => void;
+  /** 임대차계약서 업로드+분석(POST /api/documents/lease-contract/upload-analyze) 결과. */
+  leaseContractAnalysis: LeaseContractAnalysisResult | null;
+  setLeaseContractAnalysis: (result: LeaseContractAnalysisResult) => void;
 };
 
 /**
@@ -23,5 +31,10 @@ export const useDocumentAnalysisStore = create<DocumentAnalysisState>(
     buildingLedgerAnalysis: null,
     setBuildingLedgerAnalysis: (result) =>
       set({ buildingLedgerAnalysis: result }),
+    brokerageAnalysis: null,
+    setBrokerageAnalysis: (result) => set({ brokerageAnalysis: result }),
+    leaseContractAnalysis: null,
+    setLeaseContractAnalysis: (result) =>
+      set({ leaseContractAnalysis: result }),
   }),
 );
