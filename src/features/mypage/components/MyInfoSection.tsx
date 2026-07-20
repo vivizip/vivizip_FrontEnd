@@ -64,8 +64,9 @@ const NATIONALITY_LABELS: Record<string, string> = {
 };
 
 const GENDER_LABELS: Record<string, string> = {
-  MALE: "남",
-  FEMALE: "여",
+  MALE: "남자",
+  FEMALE: "여자",
+  NOT_SPECIFIED: "비공개",
 };
 
 /**
@@ -263,7 +264,7 @@ export default function MyInfoSection() {
               elevation: 2,
             }}
           >
-            <View className="w-full flex-row items-center justify-center gap-2">
+            <View className="w-full flex-row items-center justify-center gap-4">
               <View className="h-[60px] w-[60px]">
                 {profile.profileImage ? (
                   <Image

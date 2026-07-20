@@ -13,6 +13,9 @@ import ChecklistCard from "../../features/ai-reviewer/components/document-result
 import CheckedItemsCard from "../../features/ai-reviewer/components/document-result/CheckedItemsCard";
 import LoanRiskSection from "../../features/ai-reviewer/components/document-result/LoanRiskSection";
 import { useDocumentProgressStore } from "../../features/ai-reviewer/store/useDocumentProgressStore";
+import { useDocumentAnalysisStore } from "../../features/ai-reviewer/store/useDocumentAnalysisStore";
+import type { RegistryAnalysisResult } from "../../features/ai-reviewer/services/registryDocumentApi";
+import type { BuildingLedgerAnalysis } from "../../features/ai-reviewer/services/buildingLedgerApi";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const profileIcon = require("../../../assets/icons/icon_profile.png");
@@ -38,6 +41,12 @@ const formatIssuedAt = (date: Date) => {
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}.${mm}.${dd}에 발급했어요`;
+};
+
+// "YYYY.MM.DD" -> Date (등기부 분석 API의 issuedAt 형식)
+const parseYmd = (value: string): Date => {
+  const [y, m, d] = value.split(".").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
 };
 
 // TODO(API 대기): 분석 API 연동 전까지 Figma 목업과 동일한 정적 데이터 사용
@@ -102,6 +111,62 @@ const MOCK_RESULT = {
   },
 };
 
+// 원 -> 만원 (LoanRiskSection의 formatWon은 "만원" 단위 표시를 전제로 함)
+const wonToManwon = (value: number | null) => (value ?? 0) / 10000;
+
+/**
+ * POST /api/documents/registry/upload-analyze 실제 응답을 화면이 쓰는 목업과
+ * 같은 모양으로 변환한다. API가 안전(risk 없음) 항목엔 설명을 주지 않으므로,
+ * "확인한 항목" 리스트는 렌더링하지 않고(checkedItems: []) 감지된 위험만 보여준다.
+ */
+const buildRegistryResult = ({
+  analysis,
+  riskExplanations,
+  marketPrice,
+}: RegistryAnalysisResult) => {
+  const hasAnyRisk = Object.values(analysis.riskFlags).some(Boolean);
+
+  return {
+    title: "등기부등본 확인",
+    documentName: analysis.propertyAddress,
+    issuedAt: parseYmd(analysis.issuedAt),
+    owner: analysis.ownerName,
+    registeredAt: analysis.registeredAt,
+    addressLines: analysis.buildingUsage
+      ? [analysis.propertyAddress, analysis.buildingUsage]
+      : [analysis.propertyAddress],
+    usage: {
+      status: (analysis.isResidential
+        ? "positive"
+        : "negative") as PositiveNegativeStatus,
+      positiveText: MOCK_RESULT.usage.positiveText,
+      negativeText: MOCK_RESULT.usage.negativeText,
+    },
+    riskFactors: {
+      status: (hasAnyRisk ? "negative" : "positive") as PositiveNegativeStatus,
+      positiveTitle: "위험요소가 발견되지 않았어요",
+      positiveDescription:
+        "현재 확인한 등기부등본 기준으로 특별히 주의할 내용은 발견되지 않았어요.",
+      checkedItems: [] as { title: string; description: string }[],
+      notice: MOCK_RESULT.riskFactors.notice,
+      negativeRisks: riskExplanations.map((risk) => ({
+        title: risk.term,
+        description: risk.explanation,
+      })),
+      // "계약 전 확인해보세요" 체크리스트는 API가 아닌 프론트 고정값 (기존 목업 그대로 사용)
+      negativeChecklist: MOCK_RESULT.riskFactors.negativeChecklist,
+    },
+    loanRisk: {
+      status: (analysis.hasMortgage
+        ? "negative"
+        : "positive") as PositiveNegativeStatus,
+      homePrice: wonToManwon(marketPrice),
+      maxClaimAmount: wonToManwon(analysis.mortgageMaximumClaimAmount),
+      myDeposit: 0,
+    },
+  };
+};
+
 const BUILDING_RESULT = {
   ...MOCK_RESULT,
   title: "건축물대장",
@@ -127,6 +192,45 @@ const BUILDING_RESULT = {
       "계약 전 다시 한번 검토하는 것을 추천해요.",
     ],
   },
+};
+
+/**
+ * POST /api/documents/building-ledger/upload-analyze 실제 응답을 화면이 쓰는
+ * BUILDING_RESULT 목업과 같은 모양으로 변환한다. comparison(등기부등본과 비교)은
+ * 등기부등본 분석이 아직 없어 ownerMatched/addressMatched가 null(비교 전)이면
+ * 배너 자체를 표시하지 않는다.
+ */
+const buildBuildingLedgerResult = (analysis: BuildingLedgerAnalysis) => {
+  const hasComparison =
+    analysis.ownerMatched !== null && analysis.addressMatched !== null;
+  const comparisonMatches =
+    analysis.ownerMatched === true && analysis.addressMatched === true;
+
+  return {
+    ...BUILDING_RESULT,
+    documentName: analysis.address,
+    issuedAt: parseYmd(analysis.issuedDate),
+    owner: analysis.ownerName,
+    registeredAt: analysis.ownershipTransferDate,
+    addressLines: analysis.buildingUse
+      ? [analysis.address, analysis.buildingUse]
+      : [analysis.address],
+    comparison: hasComparison
+      ? {
+          status: (comparisonMatches
+            ? "positive"
+            : "negative") as PositiveNegativeStatus,
+          positiveText: BUILDING_RESULT.comparison.positiveText,
+          negativeText: BUILDING_RESULT.comparison.negativeText,
+        }
+      : null,
+    buildingViolation: {
+      ...BUILDING_RESULT.buildingViolation,
+      status: (analysis.hasViolation
+        ? "negative"
+        : "positive") as PositiveNegativeStatus,
+    },
+  };
 };
 
 const BROKERAGE_RESULT = {
@@ -196,22 +300,38 @@ export default function DocumentResultScreen() {
   }>();
   const isBuilding = documentType === "building";
   const isBrokerage = documentType === "brokerage";
-  const result = isBrokerage
-    ? BROKERAGE_RESULT
-    : isBuilding
-      ? BUILDING_RESULT
-      : MOCK_RESULT;
+  const registryAnalysis = useDocumentAnalysisStore(
+    (state) => state.registryAnalysis,
+  );
+  const buildingLedgerAnalysis = useDocumentAnalysisStore(
+    (state) => state.buildingLedgerAnalysis,
+  );
+  const registryResult =
+    !isBuilding && !isBrokerage && registryAnalysis
+      ? buildRegistryResult(registryAnalysis)
+      : null;
+  const buildingResult =
+    isBuilding && buildingLedgerAnalysis
+      ? buildBuildingLedgerResult(buildingLedgerAnalysis)
+      : null;
+  const result =
+    registryResult ??
+    (isBrokerage
+      ? BROKERAGE_RESULT
+      : isBuilding
+        ? (buildingResult ?? BUILDING_RESULT)
+        : MOCK_RESULT);
   const tabs = isBrokerage
     ? BROKERAGE_TABS
     : isBuilding
       ? BUILDING_TABS
       : REGISTRY_TABS;
   const buildingViolation = isBuilding
-    ? BUILDING_RESULT.buildingViolation
+    ? (buildingResult ?? BUILDING_RESULT).buildingViolation
     : null;
   const infoBanner = isBuilding
-    ? BUILDING_RESULT.comparison
-    : MOCK_RESULT.usage;
+    ? (buildingResult ?? BUILDING_RESULT).comparison
+    : result.usage;
   const [activeIndex, setActiveIndex] = useState(0);
   const markCompleted = useDocumentProgressStore(
     (state) => state.markCompleted,
@@ -284,15 +404,17 @@ export default function DocumentResultScreen() {
               />
             </View>
 
-            <InfoBanner
-              icon={aiIcon}
-              text={
-                infoBanner.status === "negative"
-                  ? infoBanner.negativeText
-                  : infoBanner.positiveText
-              }
-              variant={infoBanner.status}
-            />
+            {infoBanner && (
+              <InfoBanner
+                icon={aiIcon}
+                text={
+                  infoBanner.status === "negative"
+                    ? infoBanner.negativeText
+                    : infoBanner.positiveText
+                }
+                variant={infoBanner.status}
+              />
+            )}
           </>
         )}
 
@@ -399,11 +521,13 @@ export default function DocumentResultScreen() {
                   </View>
                 </View>
 
-                <CheckedItemsCard
-                  icon={checkIcon}
-                  title="등기부등본에서 확인한 내용이에요."
-                  items={result.riskFactors.checkedItems}
-                />
+                {result.riskFactors.checkedItems.length > 0 && (
+                  <CheckedItemsCard
+                    icon={checkIcon}
+                    title="등기부등본에서 확인한 내용이에요."
+                    items={result.riskFactors.checkedItems}
+                  />
+                )}
 
                 <View className="w-full flex-row items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
                   <Image
@@ -426,10 +550,10 @@ export default function DocumentResultScreen() {
               cautionIcon={cautionBigIcon}
               checkIcon={checkBigIcon}
               aiIcon={aiIcon}
-              status={MOCK_RESULT.loanRisk.status}
-              homePrice={MOCK_RESULT.loanRisk.homePrice}
-              maxClaimAmount={MOCK_RESULT.loanRisk.maxClaimAmount}
-              initialMyDeposit={MOCK_RESULT.loanRisk.myDeposit}
+              status={result.loanRisk.status}
+              homePrice={result.loanRisk.homePrice}
+              maxClaimAmount={result.loanRisk.maxClaimAmount}
+              initialMyDeposit={result.loanRisk.myDeposit}
             />
           </View>
         )}

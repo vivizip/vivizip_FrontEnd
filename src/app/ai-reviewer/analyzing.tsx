@@ -2,11 +2,19 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Easing, Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { isAxiosError } from "axios";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const loadingDocumentImage = require("../../../assets/images/loading_document.png");
 
 import TopBar from "../../components/TopBar";
+import { useRegisteredHouseStore } from "../../features/ai-reviewer/store/useRegisteredHouseStore";
+import { useDocumentAnalysisStore } from "../../features/ai-reviewer/store/useDocumentAnalysisStore";
+import { uploadAndAnalyzeRegistry } from "../../features/ai-reviewer/services/registryDocumentApi";
+import { uploadAndAnalyzeBuildingLedger } from "../../features/ai-reviewer/services/buildingLedgerApi";
+import { useToastStore } from "../../store/useToastStore";
+
+const FALLBACK_ANALYZE_ERROR = "서류 분석에 실패했어요. 다시 시도해주세요.";
 
 const DOT_COUNT = 3;
 const DOT_CYCLE_DURATION = 1800; // 한 바퀴(점 하나당 600ms씩 순차 강조)
@@ -67,7 +75,15 @@ export default function AnalyzingScreen() {
     documentType?: "registry" | "building" | "brokerage" | "lease-contract";
     imageUri?: string;
   }>();
-  console.log("[Analyzing] received imageUri:", imageUri);
+  const currentHouseId = useRegisteredHouseStore(
+    (state) => state.currentHouseId,
+  );
+  const setRegistryAnalysis = useDocumentAnalysisStore(
+    (state) => state.setRegistryAnalysis,
+  );
+  const setBuildingLedgerAnalysis = useDocumentAnalysisStore(
+    (state) => state.setBuildingLedgerAnalysis,
+  );
 
   const hasResultScreen =
     documentType === "registry" ||
@@ -75,10 +91,79 @@ export default function AnalyzingScreen() {
     documentType === "brokerage" ||
     documentType === "lease-contract";
 
-  // TEST ONLY: 분석 API가 없어 완료 신호를 흉내내는 임시 타이머.
+  // 등기부등본/건축물대장을 사진 촬영으로 발급한 경우에만 실제 업로드+분석 API를 호출한다.
+  // (앱 발급 경로는 imageUri가 없어 아래 else 분기의 임시 타이머로 진행. brokerage/lease-contract는 아직 미연동)
+  const isRealUpload =
+    (documentType === "registry" || documentType === "building") &&
+    !!imageUri;
+
+  useEffect(() => {
+    if (!isRealUpload) return;
+    if (!currentHouseId) {
+      useToastStore
+        .getState()
+        .show("집 주소를 먼저 등록해주세요.");
+      router.back();
+      return;
+    }
+
+    let cancelled = false;
+    const run = async () => {
+      try {
+        if (documentType === "building") {
+          const result = await uploadAndAnalyzeBuildingLedger(
+            Number(currentHouseId),
+            imageUri as string,
+          );
+          if (cancelled) return;
+          setBuildingLedgerAnalysis(result);
+        } else {
+          const result = await uploadAndAnalyzeRegistry(
+            Number(currentHouseId),
+            [imageUri as string],
+          );
+          if (cancelled) return;
+          setRegistryAnalysis(result);
+        }
+        router.replace({
+          pathname: "/ai-reviewer/document-result",
+          params: { documentType },
+        });
+      } catch (err) {
+        if (cancelled) return;
+        if (isAxiosError(err)) {
+          console.log(
+            "[Analyzing] upload/analyze failed:",
+            err.response?.status,
+            JSON.stringify(err.response?.data),
+          );
+        } else {
+          console.log("[Analyzing] upload/analyze failed:", String(err));
+        }
+        useToastStore
+          .getState()
+          .show(err instanceof Error ? err.message : FALLBACK_ANALYZE_ERROR);
+        router.back();
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentHouseId,
+    documentType,
+    imageUri,
+    isRealUpload,
+    router,
+    setBuildingLedgerAnalysis,
+    setRegistryAnalysis,
+  ]);
+
+  // TEST ONLY: 분석 API가 없는 나머지 문서 종류는 완료 신호를 흉내내는 임시 타이머 유지.
   // API 나오면 폴링 완료 콜백으로 교체하고 이 useEffect는 제거할 것.
   useEffect(() => {
-    if (!hasResultScreen) return;
+    if (!hasResultScreen || isRealUpload) return;
     const timer = setTimeout(() => {
       if (documentType === "brokerage") {
         router.replace({
@@ -100,7 +185,7 @@ export default function AnalyzingScreen() {
       });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [documentType, hasResultScreen, imageUri, router]);
+  }, [documentType, hasResultScreen, imageUri, isRealUpload, router]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F7FC]">

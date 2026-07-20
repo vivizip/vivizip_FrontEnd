@@ -23,9 +23,9 @@ type Props = {
 
 const formatWon = (value: number) => `${value.toLocaleString("ko-KR")} 만원`;
 
-// Figma 목업의 막대 너비(296px 트랙 기준 239px/159px)를 퍼센트로 환산한 고정값
-const DEPOSIT_BAR_PERCENT = (239 / 296) * 100;
-const CLAIM_BAR_PERCENT = (159 / 296) * 100;
+// 집 시세(homePrice) 대비 비율(%). 막대 너비는 100%로 clamp하되, 라벨(위험 비율)은 실제값을 보여준다.
+const toPercent = (value: number, homePrice: number) =>
+  homePrice > 0 ? (value / homePrice) * 100 : 0;
 
 // 시트가 화면 밖에서 시작하도록 하는 충분히 큰 오프셋 (houses.tsx 케밥 시트와 동일 패턴)
 const SHEET_OFFSCREEN_Y = 400;
@@ -50,8 +50,14 @@ export default function LoanRiskSection({
   const [depositDraft, setDepositDraft] = useState(initialMyDeposit);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSheetMounted, setIsSheetMounted] = useState(false);
-  const riskRatio = 75;
   const isPositive = status === "positive";
+  // 위험 비율 = (채권최고액 + 내 보증금) / 집 시세. 막대는 100%로 clamp, 라벨은 실제값 표시.
+  const riskRatio = Math.round(toPercent(maxClaimAmount + myDeposit, homePrice));
+  const claimBarPercent = Math.min(toPercent(maxClaimAmount, homePrice), 100);
+  const depositBarPercent = Math.min(
+    toPercent(maxClaimAmount + myDeposit, homePrice),
+    100,
+  );
 
   // 배경: opacity 0 -> 0.2 (Figma) / 시트: translateY SHEET_OFFSCREEN_Y -> 0 (slide up)
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -140,11 +146,11 @@ export default function LoanRiskSection({
               <View className="relative h-3 w-full overflow-hidden rounded-full bg-gray-50">
                 <View
                   className="absolute left-0 top-0 h-3 rounded-full bg-secondary-400"
-                  style={{ width: `${DEPOSIT_BAR_PERCENT}%` }}
+                  style={{ width: `${depositBarPercent}%` }}
                 />
                 <View
                   className="absolute left-0 top-0 h-3 rounded-full bg-secondary-300"
-                  style={{ width: `${CLAIM_BAR_PERCENT}%` }}
+                  style={{ width: `${claimBarPercent}%` }}
                 />
               </View>
 

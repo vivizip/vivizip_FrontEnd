@@ -17,8 +17,11 @@ type RegisteredHouseState = {
    * DocumentChecklist, register-document.tsx)은 그대로 쓸 수 있다.
    */
   address: string | null;
-  /** 주소 검색(confirm.tsx)에서 확정한 새 집을 목록 맨 앞에 추가하고 현재 집으로 설정한다. */
-  addHouse: (house: { title: string; subtitle: string }) => void;
+  /**
+   * 주소 검색(confirm.tsx)에서 저장 직후 GET /api/lease-cases + GET /api/lease-cases/{id}로
+   * 다시 불러온 전체 목록으로 교체하고, 방금 등록한 집을 현재 집으로 설정한다.
+   */
+  setHouses: (houses: RegisteredHouse[], currentHouseId: string) => void;
   setCurrentHouse: (id: string) => void;
   removeHouse: (id: string) => void;
 };
@@ -31,13 +34,13 @@ export const useRegisteredHouseStore = create<RegisteredHouseState>((set) => ({
   houses: [],
   currentHouseId: null,
   address: null,
-  addHouse: (house) =>
-    set((state) => {
-      const newHouse: RegisteredHouse = { id: `${Date.now()}`, ...house };
+  setHouses: (houses, currentHouseId) =>
+    set(() => {
+      const current = houses.find((h) => h.id === currentHouseId) ?? null;
       return {
-        houses: [newHouse, ...state.houses],
-        currentHouseId: newHouse.id,
-        address: newHouse.title,
+        houses,
+        currentHouseId: current?.id ?? null,
+        address: current?.title ?? null,
       };
     }),
   setCurrentHouse: (id) =>
