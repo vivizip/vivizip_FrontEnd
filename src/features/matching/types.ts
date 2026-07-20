@@ -4,14 +4,11 @@
  */
 export type MatchingRole = "supporter" | "student";
 
-export type MatchingGender = "male" | "female" | "unspecified";
+// 성별/국적은 GET /api/options/genders, /api/options/nationalities가 내려주는
+// code 값을 그대로 쓴다 (고정 목록이 아니라 서버 옵션 목록에 따라 달라짐).
+export type MatchingGender = string;
 
-export type MatchingNationality =
-  | "vietnam"
-  | "china"
-  | "korea"
-  | "nepal"
-  | "indonesia";
+export type MatchingNationality = string;
 
 /** 유학생 분기 - 한국어 대화 편의 수준 */
 export type MatchingKoreanLevel = "greeting" | "daily" | "fluent";

@@ -27,6 +27,7 @@ type Props = {
   onChangeReason: (reason: string) => void;
   onConfirmRematch: () => void;
   onCancel: () => void;
+  isSubmitting: boolean;
 };
 
 /**
@@ -36,15 +37,16 @@ type Props = {
  * 감싼 ScrollView의 콘텐츠 하단에 키보드 높이만큼 여유 패딩을 줘서, 포커스된 TextInput이
  * RN 기본 동작(포커스된 입력칸을 ScrollView 안에서 보이는 위치까지 자동 스크롤)으로
  * 키보드 위까지 올라올 수 있는 스크롤 여유 공간을 만들어준다.
- * TODO(재매칭/매칭 취소 미구현): 실제 취소·재매칭 백엔드가 없어 입력값은 로컬 상태로만 보관한다.
+ * 재매칭은 POST /api/matches/{matchId}/rematch로 연결됨(MateChatScreen이 실제 호출 담당).
  */
 export default function CancelMatchSheet({
   reason,
   onChangeReason,
   onConfirmRematch,
   onCancel,
+  isSubmitting,
 }: Props) {
-  const canSubmit = reason.trim().length > 0;
+  const canSubmit = reason.trim().length > 0 && !isSubmitting;
   const currentUserName =
     useAuthUserStore((state) => state.user?.nickname) ?? FALLBACK_USER_NAME;
   const [keyboardHeight, setKeyboardHeight] = useState(0);

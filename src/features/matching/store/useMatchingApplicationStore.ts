@@ -1,10 +1,15 @@
 import { create } from "zustand";
 
+import type { MatchResult, MatchStatusValue } from "../services/matchApi";
 import type { MatchingRole } from "../types";
 
 type MatchingApplicationState = {
-  /** 부메랑 신청 온보딩 완료 여부. true가 되면 홈 배너가 매칭완료 상태로 바뀐다. */
-  isApplied: boolean;
+  /**
+   * GET /api/matches/status의 3단계 진행 상태. 앱을 새로 켜면 이 스토어는 기본값
+   * "NOT_APPLIED"로 초기화되므로, 홈 화면이 포커스될 때마다 실제 값으로 갱신해야 한다
+   * (BoomerangBannerCard 참고).
+   */
+  matchStatus: MatchStatusValue;
   /** 온보딩 1단계에서 고른 역할. 마이페이지의 "서포터즈" 뱃지 표시 여부에 쓰인다. */
   role: MatchingRole | null;
   /**
@@ -14,8 +19,12 @@ type MatchingApplicationState = {
   matchCount: number;
   /** 대화방에서 "집 구하기 완료"를 처음 누른 시각. 마이페이지 "D+N" 통계에 쓰인다. */
   houseFoundAt: Date | null;
+  /** POST /api/matches(유학생 매칭 신청) 응답. 서포터즈는 이 호출을 하지 않아 null로 남는다. */
+  lastMatch: MatchResult | null;
   markApplied: (role: MatchingRole | null) => void;
   markHouseFound: () => void;
+  setLastMatch: (match: MatchResult) => void;
+  setMatchStatus: (status: MatchStatusValue) => void;
 };
 
 /**
@@ -25,13 +34,13 @@ type MatchingApplicationState = {
  */
 export const useMatchingApplicationStore = create<MatchingApplicationState>(
   (set) => ({
-    isApplied: false,
+    matchStatus: "NOT_APPLIED",
     role: null,
     matchCount: 0,
     houseFoundAt: null,
+    lastMatch: null,
     markApplied: (role) =>
       set((state) => ({
-        isApplied: true,
         role,
         matchCount: state.matchCount + 1,
       })),
@@ -40,5 +49,7 @@ export const useMatchingApplicationStore = create<MatchingApplicationState>(
       set((state) =>
         state.houseFoundAt ? state : { houseFoundAt: new Date() },
       ),
+    setLastMatch: (match) => set({ lastMatch: match }),
+    setMatchStatus: (status) => set({ matchStatus: status }),
   }),
 );

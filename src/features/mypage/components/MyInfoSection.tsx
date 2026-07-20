@@ -41,13 +41,12 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const SHEET_OFFSCREEN_Y = 400;
 const ANIMATION_DURATION = 220;
 
-const LANGUAGE_DISPLAY: Record<
-  LanguageOption,
-  { code: string; flag: ImageSourcePropType }
-> = {
-  korea: { code: "KR", flag: koreaFlag },
-  vietnam: { code: "VN", flag: vietnamFlag },
-  china: { code: "CN", flag: chinaFlag },
+// GET /api/options/languages의 code 값을 그대로 키로 쓴다(GET /api/users/me의
+// language 필드와 동일한 백엔드 enum). 매핑에 없는 코드는 KOREAN 표시로 폴백한다.
+const LANGUAGE_DISPLAY: Record<string, { code: string; flag: ImageSourcePropType }> = {
+  KOREAN: { code: "KR", flag: koreaFlag },
+  VIETNAMESE: { code: "VN", flag: vietnamFlag },
+  CHINESE: { code: "CN", flag: chinaFlag },
 };
 
 const FALLBACK_NICKNAME = "회원";
@@ -64,12 +63,6 @@ const NATIONALITY_LABELS: Record<string, string> = {
 const GENDER_LABELS: Record<string, string> = {
   MALE: "남",
   FEMALE: "여",
-};
-
-const LANGUAGE_ENUM_TO_OPTION: Record<string, LanguageOption> = {
-  KOREAN: "korea",
-  VIETNAMESE: "vietnam",
-  CHINESE: "china",
 };
 
 // TODO(1:1 매칭 백엔드 미구현): 온보딩에서 실제로 고른 시간대를 조회할 방법이 없어 목업으로 표시.
@@ -106,10 +99,7 @@ export default function MyInfoSection() {
   // 프로필의 language를 초기값으로만 쓰고(1회), 이후 시트에서 고른 값은 로컬 상태로만 관리한다
   // (TODO(언어 변경 API 미구현): 실제로 서버에 반영하는 엔드포인트가 아직 없음).
   const [language, setLanguage] = useState<LanguageOption>(
-    () =>
-      LANGUAGE_ENUM_TO_OPTION[
-        useAuthUserStore.getState().user?.language ?? ""
-      ] ?? "korea",
+    () => useAuthUserStore.getState().user?.language ?? "KOREAN",
   );
   const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
   const [isLanguageSheetMounted, setIsLanguageSheetMounted] = useState(false);
@@ -228,10 +218,10 @@ export default function MyInfoSection() {
           accessibilityLabel="언어 선택"
         >
           <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-800">
-            {LANGUAGE_DISPLAY[language].code}
+            {(LANGUAGE_DISPLAY[language] ?? LANGUAGE_DISPLAY.KOREAN).code}
           </Text>
           <Image
-            source={LANGUAGE_DISPLAY[language].flag}
+            source={(LANGUAGE_DISPLAY[language] ?? LANGUAGE_DISPLAY.KOREAN).flag}
             className="h-[18px] w-6 rounded-sm"
             resizeMode="cover"
           />
@@ -398,7 +388,11 @@ export default function MyInfoSection() {
         />
         <Animated.View style={{ transform: [{ translateY: sheetTranslateY }] }}>
           <BottomSheet>
-            <LanguageSelectSheet value={language} onConfirm={handleConfirmLanguage} />
+            <LanguageSelectSheet
+              value={language}
+              onConfirm={handleConfirmLanguage}
+              isOpen={isLanguageSheetOpen}
+            />
           </BottomSheet>
         </Animated.View>
       </View>

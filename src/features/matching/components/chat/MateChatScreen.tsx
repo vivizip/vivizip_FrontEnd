@@ -26,6 +26,8 @@ import MapPreview from "./MapPreview";
 import CancelMatchSheet from "./CancelMatchSheet";
 import AttachmentMenu from "./AttachmentMenu";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
+import { requestRematch } from "../../services/matchApi";
+import { useToastStore } from "../../../../store/useToastStore";
 
 // 시트가 화면 밖에서 시작하도록 하는 충분히 큰 오프셋 (houses.tsx와 동일한 패턴)
 const SHEET_OFFSCREEN_Y = 400;
@@ -261,6 +263,9 @@ export default function MateChatScreen() {
   const router = useRouter();
   const houseFoundAt = useMatchingApplicationStore((state) => state.houseFoundAt);
   const markHouseFound = useMatchingApplicationStore((state) => state.markHouseFound);
+  const lastMatch = useMatchingApplicationStore((state) => state.lastMatch);
+  const setLastMatch = useMatchingApplicationStore((state) => state.setLastMatch);
+  const [isSubmittingRematch, setIsSubmittingRematch] = useState(false);
   const [roomCreatedAt] = useState(() => new Date());
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     createMockMessages(roomCreatedAt),
@@ -301,10 +306,25 @@ export default function MateChatScreen() {
     cancelMatchSheet.open();
   };
 
-  // TODO(재매칭/매칭 취소 미구현): 실제 백엔드 연동 전까지 입력값 초기화 후 시트만 닫는다.
-  const handleConfirmRematch = () => {
-    setCancelReason("");
-    cancelMatchSheet.close();
+  const handleConfirmRematch = async () => {
+    if (!lastMatch || isSubmittingRematch) return;
+    setIsSubmittingRematch(true);
+    try {
+      const updated = await requestRematch(lastMatch.matchId, cancelReason.trim());
+      setLastMatch(updated);
+      setCancelReason("");
+      cancelMatchSheet.close();
+      useToastStore.getState().show("재매칭이 완료됐어요");
+      router.replace("/home");
+    } catch (err) {
+      useToastStore
+        .getState()
+        .show(
+          err instanceof Error ? err.message : "재매칭에 실패했어요. 다시 시도해주세요.",
+        );
+    } finally {
+      setIsSubmittingRematch(false);
+    }
   };
 
   const menuItems: BottomSheetItem[] = [
@@ -942,6 +962,7 @@ export default function MateChatScreen() {
                 onChangeReason={setCancelReason}
                 onConfirmRematch={handleConfirmRematch}
                 onCancel={cancelMatchSheet.close}
+                isSubmitting={isSubmittingRematch}
               />
             </BottomSheet>
           </Animated.View>

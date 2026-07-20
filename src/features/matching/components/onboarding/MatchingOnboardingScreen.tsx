@@ -16,12 +16,40 @@ import MatchingOnboardingBudgetStep from "./MatchingOnboardingBudgetStep";
 import MatchingOnboardingFinishStep from "./MatchingOnboardingFinishStep";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
 import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
+import { useToastStore } from "../../../../store/useToastStore";
+import {
+  submitStudentOnboarding,
+  submitSupporterOnboarding,
+  type TimeSlotDay,
+  type TimeSlotPeriod,
+  type TimeSlotRequest,
+} from "../../services/matchingOnboardingApi";
+import { requestMatch, type MatchStatusValue } from "../../services/matchApi";
 import type {
   MatchingGender,
   MatchingKoreanLevel,
   MatchingNationality,
   MatchingRole,
 } from "../../types";
+
+const KOREAN_LEVEL_TO_CODE: Record<MatchingKoreanLevel, string> = {
+  greeting: "BEGINNER",
+  daily: "INTERMEDIATE",
+  fluent: "ADVANCED",
+};
+
+// selectedTimeSlots의 키는 "dayKey-periodKey"(예: "mon-morning", MatchingOnboardingTimeSlotStep
+// 참고) 형태라, 각 부분을 대문자로 바꾸면 그대로 백엔드 day/period 코드와 일치한다.
+const buildTimeSlotRequests = (slots: Set<string>): TimeSlotRequest[] =>
+  Array.from(slots).map((key) => {
+    const [day, period] = key.split("-");
+    return {
+      day: day.toUpperCase() as TimeSlotDay,
+      period: period.toUpperCase() as TimeSlotPeriod,
+    };
+  });
+
+const FALLBACK_SUBMIT_ERROR = "신청에 실패했어요. 다시 시도해주세요.";
 
 // 진행률바가 있는 단계 수. 0~4(환영/역할/이메일/국적/성별)는 공통이고, 5단계부터
 // 역할별로 갈린다 - 서포터즈는 시간대 선택(5)까지, 유학생은 한국어 수준(5)→예산(6)
@@ -52,14 +80,22 @@ const FALLBACK_NICKNAME = "회원";
 export default function MatchingOnboardingScreen() {
   const router = useRouter();
   const markApplied = useMatchingApplicationStore((state) => state.markApplied);
+  const setLastMatch = useMatchingApplicationStore((state) => state.setLastMatch);
+  const setMatchStatus = useMatchingApplicationStore(
+    (state) => state.setMatchStatus,
+  );
   const nickname =
     useAuthUserStore((state) => state.user?.nickname) ?? FALLBACK_NICKNAME;
+  // 마이페이지에서 이미 학교 인증을 마쳤으면(schoolVerified) 온보딩의 학교 메일 인증
+  // 단계(index 2)를 건너뛴다 - 두 곳 다 같은 GET /api/users/me.schoolVerified를 본다.
+  const isSchoolVerified =
+    useAuthUserStore((state) => state.user?.schoolVerified) ?? false;
   const [step, setStep] = useState(0);
   const [role, setRole] = useState<MatchingRole | null>(null);
   const [email, setEmail] = useState("");
   const [emailPhase, setEmailPhase] = useState<SchoolEmailPhase>("idle");
   const [emailCode, setEmailCode] = useState("");
-  const [nationality, setNationality] = useState<MatchingNationality>("korea");
+  const [nationality, setNationality] = useState<MatchingNationality>("");
   const [gender, setGender] = useState<MatchingGender | null>(null);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<Set<string>>(
     new Set(),
@@ -69,6 +105,7 @@ export default function MatchingOnboardingScreen() {
   );
   const [deposit, setDeposit] = useState(0);
   const [rent, setRent] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const questionSteps =
     role === "student" ? STUDENT_QUESTION_STEPS : SUPPORTER_QUESTION_STEPS;
@@ -88,20 +125,60 @@ export default function MatchingOnboardingScreen() {
 
   const isFinishStep = step === finishStep;
 
-  const goNext = () => {
+  const goNext = async () => {
     if (isFinishStep) {
-      markApplied(role);
-      router.replace("/home");
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+      try {
+        const timeSlots = buildTimeSlotRequests(selectedTimeSlots);
+        if (role === "student") {
+          await submitStudentOnboarding({
+            nationality,
+            koreanLevel: koreanLevel ? KOREAN_LEVEL_TO_CODE[koreanLevel] : "",
+            gender: gender ?? "",
+            depositBudget: deposit,
+            monthlyRentBudget: rent,
+            timeSlots,
+          });
+          // 유학생만 매칭을 "신청"한다 - 서포터즈는 학생의 신청에 의해 매칭될 뿐
+          // 직접 이 API를 호출하지 않는다.
+          const match = await requestMatch();
+          setLastMatch(match);
+          setMatchStatus(match.status as MatchStatusValue);
+        } else {
+          await submitSupporterOnboarding({
+            nationality,
+            gender: gender ?? "",
+            timeSlots,
+          });
+          // 서포터즈는 등록만 하고 실제 매칭은 나중에 유학생 쪽 신청으로 성사된다.
+          setMatchStatus("APPLIED_NOT_MATCHED");
+        }
+        markApplied(role);
+        router.replace("/home");
+      } catch (err) {
+        useToastStore
+          .getState()
+          .show(err instanceof Error ? err.message : FALLBACK_SUBMIT_ERROR);
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
-    setStep((prev) => prev + 1);
+    setStep((prev) => {
+      const next = prev + 1;
+      return isSchoolVerified && next === 2 ? 3 : next;
+    });
   };
   const goBack = () => {
     if (step === 0) {
       router.back();
-    } else {
-      setStep((prev) => prev - 1);
+      return;
     }
+    setStep((prev) => {
+      const back = prev - 1;
+      return isSchoolVerified && back === 2 ? 1 : back;
+    });
   };
 
   const progress = isFinishStep ? 1 : (step + 1) / questionSteps;
@@ -110,7 +187,7 @@ export default function MatchingOnboardingScreen() {
     ? {
         question: "매칭 준비가 완료되었어요",
         subtitle: "부메랑 메이트 매칭까지는 2주 정도 소요돼요",
-        ctaActive: true,
+        ctaActive: !isSubmitting,
         ctaLabel: "완료",
         content: <MatchingOnboardingFinishStep />,
       }
@@ -162,7 +239,7 @@ export default function MatchingOnboardingScreen() {
           case 3:
             return {
               question: "국적은 어디신가요?",
-              ctaActive: true,
+              ctaActive: nationality !== "",
               content: (
                 <MatchingOnboardingNationalityStep
                   nationality={nationality}
