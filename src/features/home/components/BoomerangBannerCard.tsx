@@ -9,7 +9,10 @@ import BannerImage from "../../../../assets/images/img_banner_image.svg";
 import IngGradation1 from "../../../../assets/images/img_banner_ing_gradation1.svg";
 import IngGradation2 from "../../../../assets/images/img_banner_ing_gradation2.svg";
 import { useMatchingApplicationStore } from "../../matching/store/useMatchingApplicationStore";
-import { getMatchResult, getMatchStatus } from "../../matching/services/matchApi";
+import {
+  getMatchResult,
+  getMatchStatus,
+} from "../../matching/services/matchApi";
 import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
 
 const rightIcon = require("../../../../assets/icons/ic_right.png");
@@ -74,7 +77,9 @@ export default function BoomerangBannerCard() {
     (state) => state.setMatchStatus,
   );
   const lastMatch = useMatchingApplicationStore((state) => state.lastMatch);
-  const setLastMatch = useMatchingApplicationStore((state) => state.setLastMatch);
+  const setLastMatch = useMatchingApplicationStore(
+    (state) => state.setLastMatch,
+  );
   const myUserId = useAuthUserStore((state) => state.user?.id);
 
   useFocusEffect(
@@ -88,7 +93,10 @@ export default function BoomerangBannerCard() {
           }
         })
         .catch((err) => {
-          console.log("[Home] getMatchStatus/getMatchResult failed:", String(err));
+          console.log(
+            "[Home] getMatchStatus/getMatchResult failed:",
+            String(err),
+          );
         });
     }, [setMatchStatus, setLastMatch]),
   );
@@ -192,7 +200,7 @@ export default function BoomerangBannerCard() {
 
   if (matchStatus === "APPLIED_NOT_MATCHED") {
     return (
-      <View className="w-full overflow-hidden rounded-xl border border-gray-300 bg-[#F2F7FC] px-4 py-[10px]">
+      <View className="w-full overflow-hidden rounded-xl border border-gray-300 bg-[#F2F7FC] px-4 py-[42px]">
         <IngGradation2
           width={398}
           height={248}
@@ -212,7 +220,7 @@ export default function BoomerangBannerCard() {
           </Text>
         </View>
         <View
-          className="absolute right-4 top-3"
+          className="absolute right-14 top-3"
           style={{ transform: [{ rotate: "10.94deg" }] }}
         >
           <Image

@@ -8,6 +8,8 @@ const closeIcon = require("../../../../../assets/icons/ic_x.png");
 type Props = {
   keywords: string[];
   onRemove: (keyword: string) => void;
+  /** 칩(X 아이콘 제외) 터치 시 그 검색어로 다시 검색 */
+  onSelect: (keyword: string) => void;
 };
 
 /**
@@ -15,7 +17,11 @@ type Props = {
  * - 타이틀: Body/body-s (Pretendard 14/600, lh 22), gray-900
  * - 칩: ChipM + ic_x, 텍스트/아이콘 모두 gray-600, Label-m(14/500, lh 20)
  */
-export default function RecentSearchChips({ keywords, onRemove }: Props) {
+export default function RecentSearchChips({
+  keywords,
+  onRemove,
+  onSelect,
+}: Props) {
   return (
     <View className="gap-3">
       <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-gray-900">
@@ -31,6 +37,7 @@ export default function RecentSearchChips({ keywords, onRemove }: Props) {
             textClassName="text-gray-600 font-medium leading-5"
             bgClassName="bg-gray-50"
             onIconPress={() => onRemove(keyword)}
+            onPress={() => onSelect(keyword)}
           />
         ))}
       </View>

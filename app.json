@@ -82,6 +82,12 @@
           "photosPermission": "입주 기록 사진 첨부를 위해 사진 접근을 허용해주세요"
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "현재 위치로 주소를 찾기 위해 위치 접근을 허용해주세요"
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "extra": {

@@ -70,6 +70,8 @@ export type MyProfileResponse = {
   nationality: string;
   gender: string;
   schoolId: number | null;
+  schoolName: string | null;
+  schoolLogoUrl: string | null;
   schoolVerified: boolean;
 };
 

@@ -6,25 +6,51 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import DetailAddressInput from "../../features/ai-reviewer/components/search/DetailAddressInput";
 import MapPreview from "../../features/ai-reviewer/components/search/MapPreview";
 import { useRegisteredHouseStore } from "../../features/ai-reviewer/store/useRegisteredHouseStore";
+import { getNearestAddress } from "../../features/ai-reviewer/services/placesApi";
 import TopBar from "../../components/TopBar";
 import CTAButton from "../../components/CTAButton";
 import { SCREEN_PADDING } from "../../lib/layout";
+import { useToastStore } from "../../store/useToastStore";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const kebabIcon = require("../../../assets/icons/ic_kebab.png");
 
 export default function ConfirmAddressScreen() {
   const router = useRouter();
-  const { address } = useLocalSearchParams<{ address?: string }>();
+  const { address, latitude, longitude } = useLocalSearchParams<{
+    address?: string;
+    latitude?: string;
+    longitude?: string;
+  }>();
   const [detailAddress, setDetailAddress] = useState("");
-  const setRegisteredAddress = useRegisteredHouseStore(
-    (state) => state.setAddress,
-  );
+  // GPS 정확도가 낮아 지도를 탭/드래그로 보정할 수 있어서, address 파라미터를 그대로
+  // 보여주지 않고 로컬 state로 들고 있다가 위치를 옮기면 재조회한 값으로 갱신한다.
+  const [displayAddress, setDisplayAddress] = useState(address ?? "");
+  const [isResolvingAddress, setIsResolvingAddress] = useState(false);
+  const addHouse = useRegisteredHouseStore((state) => state.addHouse);
+
+  const handleSelectMapLocation = async (lat: number, lng: number) => {
+    setIsResolvingAddress(true);
+    try {
+      const nextAddress = await getNearestAddress(lng, lat);
+      setDisplayAddress(nextAddress);
+    } catch (err) {
+      useToastStore
+        .getState()
+        .show(
+          err instanceof Error
+            ? err.message
+            : "주소를 다시 찾지 못했어요. 다시 시도해주세요.",
+        );
+    } finally {
+      setIsResolvingAddress(false);
+    }
+  };
 
   const handleSave = () => {
-    // TODO: 실제 저장(백엔드 연동) 전까지 로컬 상태(HouseSelector)만 갱신
-    if (address) {
-      setRegisteredAddress(address);
+    // TODO: 실제 저장(백엔드 연동) 전까지 로컬 상태(houses 목록)만 갱신
+    if (displayAddress) {
+      addHouse({ title: displayAddress, subtitle: detailAddress });
     }
     router.replace("/ai-reviewer");
   };
@@ -44,7 +70,11 @@ export default function ConfirmAddressScreen() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <MapPreview />
+        <MapPreview
+          latitude={latitude ? Number(latitude) : undefined}
+          longitude={longitude ? Number(longitude) : undefined}
+          onSelectLocation={handleSelectMapLocation}
+        />
 
         {/* 지도 ↔ 주소 텍스트 간격은 스펙 미확정으로 눈대중값 */}
         <View className="mt-6 gap-1">
@@ -52,7 +82,7 @@ export default function ConfirmAddressScreen() {
             현재 주소
           </Text>
           <Text className="font-pretendard-medium text-18 font-medium leading-[26px] text-gray-900">
-            {address}
+            {isResolvingAddress ? "주소 확인 중..." : displayAddress}
           </Text>
         </View>
 

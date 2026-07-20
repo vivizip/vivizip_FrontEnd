@@ -15,6 +15,8 @@ type Props = {
   iconTintColor?: string;
   /** 아이콘을 누를 수 있게 하려면 전달 (예: 최근 검색어 삭제) */
   onIconPress?: () => void;
+  /** 칩 전체를 누를 수 있게 하려면 전달 (예: 최근 검색어로 재검색) */
+  onPress?: () => void;
   /** 텍스트 색 tailwind 클래스 (기본 text-gray-800) */
   textClassName?: string;
   /** 배경색 tailwind 클래스 (기본 bg-gray-100) */
@@ -33,15 +35,16 @@ export default function ChipM({
   icon,
   iconTintColor,
   onIconPress,
+  onPress,
   textClassName,
   bgClassName,
 }: Props) {
-  return (
-    <View
-      className={`h-7 flex-row items-center justify-center gap-1 self-start rounded-[100px] ${
-        icon ? "pl-3 pr-2" : "px-3"
-      } ${bgClassName ?? "bg-gray-100"}`}
-    >
+  const className = `h-7 flex-row items-center justify-center gap-1 self-start rounded-[100px] ${
+    icon ? "pl-3 pr-2" : "px-3"
+  } ${bgClassName ?? "bg-gray-100"}`;
+
+  const content = (
+    <>
       <Text
         className={`font-pretendard-semibold text-14 font-semibold leading-[22px] ${
           textClassName ?? "text-gray-800"
@@ -64,6 +67,21 @@ export default function ChipM({
           />
         </Pressable>
       )}
-    </View>
+    </>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        className={`${className} active:opacity-70`}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View className={className}>{content}</View>;
 }

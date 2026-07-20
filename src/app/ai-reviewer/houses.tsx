@@ -17,28 +17,6 @@ const backIcon = require("../../../assets/icons/ic_left.png");
 const setCurrentIcon = require("../../../assets/icons/ic_location_empty.png");
 const deleteIcon = require("../../../assets/icons/ic_delete.png");
 
-// TODO: 여러 집 등록 데이터 모델(store) 연동 전까지 임시 목데이터
-const INITIAL_MOCK_ADDRESSES: RegisteredAddress[] = [
-  {
-    id: "1",
-    title: "강남구 역삼동 790-6",
-    subtitle: "서울 강남구 역삼로 180 마루 180",
-    isCurrent: true,
-  },
-  {
-    id: "2",
-    title: "충무로2가 65-4",
-    subtitle: "서울 중구 명동10길 52 신한 익스페이스",
-    isCurrent: false,
-  },
-  {
-    id: "3",
-    title: "강서구 가양동 24-8",
-    subtitle: "서울 강서구 허준대로 10 방토빌라",
-    isCurrent: false,
-  },
-];
-
 // 시트가 화면 밖에서 시작하도록 하는 충분히 큰 오프셋 (실제 시트 높이보다 크면 됨)
 const SHEET_OFFSCREEN_Y = 400;
 const ANIMATION_DURATION = 220;
@@ -49,15 +27,18 @@ type ConfirmState =
 
 export default function RegisteredHousesScreen() {
   const router = useRouter();
-  const [addresses, setAddresses] = useState<RegisteredAddress[]>(
-    INITIAL_MOCK_ADDRESSES,
+  const houses = useRegisteredHouseStore((state) => state.houses);
+  const currentHouseId = useRegisteredHouseStore(
+    (state) => state.currentHouseId,
   );
-  const setRegisteredAddress = useRegisteredHouseStore(
-    (state) => state.setAddress,
+  const setCurrentHouse = useRegisteredHouseStore(
+    (state) => state.setCurrentHouse,
   );
-  const clearRegisteredAddress = useRegisteredHouseStore(
-    (state) => state.clearAddress,
-  );
+  const removeHouse = useRegisteredHouseStore((state) => state.removeHouse);
+  const addresses: RegisteredAddress[] = houses.map((house) => ({
+    ...house,
+    isCurrent: house.id === currentHouseId,
+  }));
   const [menuAddress, setMenuAddress] = useState<RegisteredAddress | null>(
     null,
   );
@@ -112,29 +93,15 @@ export default function RegisteredHousesScreen() {
     const { type, address } = confirmState;
 
     if (type === "setCurrent") {
-      setAddresses((prev) =>
-        prev.map((item) => ({ ...item, isCurrent: item.id === address.id })),
-      );
-      setRegisteredAddress(address.title);
+      setCurrentHouse(address.id);
       setConfirmState(null);
       // 설정 완료 후 AI 서류 검토 첫 화면(탭)으로 복귀
       router.replace("/ai-reviewer");
       return;
-    } else {
-      // TODO: 실제 삭제(백엔드 API) 연동 전까지 로컬 상태에서만 제거
-      const next = addresses.filter((item) => item.id !== address.id);
-      if (address.isCurrent) {
-        if (next.length > 0) {
-          // 삭제한 주소가 현재 설정된 집이었다면 최상단 주소를 새 현재 주소로 승격
-          next[0] = { ...next[0], isCurrent: true };
-          setRegisteredAddress(next[0].title);
-        } else {
-          // 남은 주소가 없으면 HouseSelector 초기화
-          clearRegisteredAddress();
-        }
-      }
-      setAddresses(next);
     }
+
+    // TODO: 실제 삭제(백엔드 API) 연동 전까지 로컬 상태(스토어)에서만 제거
+    removeHouse(address.id);
     setConfirmState(null);
   };
 

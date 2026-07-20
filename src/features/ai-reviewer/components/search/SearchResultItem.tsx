@@ -4,6 +4,9 @@ import { Text, View } from "react-native";
 export type AddressSearchResult = {
   title: string;
   description: string;
+  /** 지도 미리보기용 좌표 - 검색 결과 선택 시 confirm 화면으로 함께 넘긴다. */
+  latitude?: number;
+  longitude?: number;
 };
 
 type Props = {
