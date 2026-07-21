@@ -27,6 +27,14 @@ import {
   PERIODS,
   buildTimeSlotKey,
 } from "../../matching/components/onboarding/MatchingOnboardingTimeSlotStep";
+import {
+  getMyTimeSlots,
+  updateMyTimeSlots,
+  type TimeSlotDay,
+  type TimeSlotPeriod,
+  type TimeSlotRequest,
+} from "../../matching/services/matchingOnboardingApi";
+import { useToastStore } from "../../../store/useToastStore";
 
 const koreaFlag = require("../../../../assets/images/img_korea.png");
 const vietnamFlag = require("../../../../assets/images/img_vietnam.png");
@@ -68,6 +76,55 @@ const GENDER_LABELS: Record<string, string> = {
   FEMALE: "여자",
   NOT_SPECIFIED: "비공개",
 };
+
+// TimeSlotEditSheet(=DAY_KEYS/PERIODS)의 UI 키 <-> GET/PUT /api/matches/time-slots의 enum 변환
+const API_DAY_TO_KEY: Record<TimeSlotDay, (typeof DAY_KEYS)[number]> = {
+  SUN: "sun",
+  MON: "mon",
+  TUE: "tue",
+  WED: "wed",
+  THU: "thu",
+  FRI: "fri",
+  SAT: "sat",
+};
+const KEY_TO_API_DAY: Record<(typeof DAY_KEYS)[number], TimeSlotDay> = {
+  sun: "SUN",
+  mon: "MON",
+  tue: "TUE",
+  wed: "WED",
+  thu: "THU",
+  fri: "FRI",
+  sat: "SAT",
+};
+const API_PERIOD_TO_KEY: Record<TimeSlotPeriod, (typeof PERIODS)[number]["key"]> = {
+  MORNING: "morning",
+  AFTERNOON: "afternoon",
+  EVENING: "evening",
+};
+const KEY_TO_API_PERIOD: Record<(typeof PERIODS)[number]["key"], TimeSlotPeriod> = {
+  morning: "MORNING",
+  afternoon: "AFTERNOON",
+  evening: "EVENING",
+};
+
+const timeSlotsToKeys = (timeSlots: TimeSlotRequest[]): Set<string> =>
+  new Set(
+    timeSlots.map((slot) =>
+      buildTimeSlotKey(API_DAY_TO_KEY[slot.day], API_PERIOD_TO_KEY[slot.period]),
+    ),
+  );
+
+const keysToTimeSlots = (keys: Set<string>): TimeSlotRequest[] =>
+  Array.from(keys).map((key) => {
+    const [dayKey, periodKey] = key.split("-") as [
+      (typeof DAY_KEYS)[number],
+      (typeof PERIODS)[number]["key"],
+    ];
+    return { day: KEY_TO_API_DAY[dayKey], period: KEY_TO_API_PERIOD[periodKey] };
+  });
+
+const FALLBACK_TIME_SLOTS_LOAD_ERROR = "활동 시간대를 불러오지 못했어요.";
+const FALLBACK_TIME_SLOTS_SAVE_ERROR = "활동 시간대 저장에 실패했어요. 다시 시도해주세요.";
 
 /**
  * 마이페이지 "내 정보" 섹션 (Figma node 1705:18257).
@@ -146,11 +203,28 @@ export default function MyInfoSection() {
     closeLanguageSheet();
   };
 
-  // TODO(활동 시간대 조회 API 미구현): 온보딩에서 고른 시간대를 불러올 API가 아직
-  // 없어 빈 값으로 시작한다 - API 생기면 profile 기준으로 초기값을 채울 것.
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<Set<string>>(
     () => new Set(),
   );
+  const [isSavingTimeSlots, setIsSavingTimeSlots] = useState(false);
+
+  // 로그인한 사용자의 활동 시간대를 최초 1회 불러와 채운다.
+  useEffect(() => {
+    if (!profile) return;
+    getMyTimeSlots()
+      .then((timeSlots) => setSelectedTimeSlots(timeSlotsToKeys(timeSlots)))
+      .catch((err) => {
+        useToastStore
+          .getState()
+          .show(
+            err instanceof Error ? err.message : FALLBACK_TIME_SLOTS_LOAD_ERROR,
+          );
+      });
+    // profile은 로그인 시 한 번 채워지고 이후 바뀌지 않는 필드들만 갱신되므로,
+    // 로그인 여부(존재 유무)가 바뀔 때만 다시 조회하면 충분하다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!profile]);
+
   const [isTimeSlotSheetOpen, setIsTimeSlotSheetOpen] = useState(false);
   const [isTimeSlotSheetMounted, setIsTimeSlotSheetMounted] = useState(false);
   const timeSlotOverlayOpacity = useRef(new Animated.Value(0)).current;
@@ -194,9 +268,22 @@ export default function MyInfoSection() {
     });
   };
 
-  const handleConfirmTimeSlots = (next: Set<string>) => {
-    setSelectedTimeSlots(next);
-    closeTimeSlotSheet();
+  const handleConfirmTimeSlots = async (next: Set<string>) => {
+    if (isSavingTimeSlots) return;
+    setIsSavingTimeSlots(true);
+    try {
+      await updateMyTimeSlots(keysToTimeSlots(next));
+      setSelectedTimeSlots(next);
+      closeTimeSlotSheet();
+    } catch (err) {
+      useToastStore
+        .getState()
+        .show(
+          err instanceof Error ? err.message : FALLBACK_TIME_SLOTS_SAVE_ERROR,
+        );
+    } finally {
+      setIsSavingTimeSlots(false);
+    }
   };
 
   const activityTimeChips = DAY_KEYS.flatMap((dayKey, dayIndex) =>
@@ -465,6 +552,7 @@ export default function MyInfoSection() {
               <TimeSlotEditSheet
                 initialSelected={selectedTimeSlots}
                 onConfirm={handleConfirmTimeSlots}
+                isSubmitting={isSavingTimeSlots}
               />
             </BottomSheet>
           </Animated.View>

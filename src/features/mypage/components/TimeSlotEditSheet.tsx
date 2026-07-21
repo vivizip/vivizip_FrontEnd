@@ -7,6 +7,7 @@ import MatchingOnboardingTimeSlotStep from "../../matching/components/onboarding
 type Props = {
   initialSelected: Set<string>;
   onConfirm: (selected: Set<string>) => void;
+  isSubmitting?: boolean;
 };
 
 /**
@@ -18,6 +19,7 @@ type Props = {
 export default function TimeSlotEditSheet({
   initialSelected,
   onConfirm,
+  isSubmitting = false,
 }: Props) {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(initialSelected),
@@ -53,7 +55,11 @@ export default function TimeSlotEditSheet({
       />
 
       <View className="w-full px-4">
-        <CTAButton label="입력 완료" active onPress={() => onConfirm(selected)} />
+        <CTAButton
+          label={isSubmitting ? "저장 중..." : "입력 완료"}
+          active={!isSubmitting}
+          onPress={() => onConfirm(selected)}
+        />
       </View>
     </View>
   );

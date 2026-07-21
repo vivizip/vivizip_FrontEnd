@@ -11,7 +11,7 @@ type Props = {
   isLast?: boolean;
   /** 이 단계(계약전 등)가 등록된 집으로 인해 활성화됐는지 */
   isActive?: boolean;
-  /** 이 항목의 발급/분석이 완료됐는지 - 완료 시 "발급완료" chip-m으로 대체 */
+  /** 이 항목의 발급/분석이 완료됐는지 - 완료 시 "분석완료" chip-m으로 대체 */
   isCompleted?: boolean;
   /** 미완료 상태에서 chip-s에 표시할 라벨 (단계별로 다름: 발급하기/분석하기/확인하기) */
   chipLabel?: string;
@@ -19,7 +19,7 @@ type Props = {
 };
 
 /**
- * 문서 한 줄 (문서명 + 발급하기 chip-s / 완료 시 발급완료 chip-m).
+ * 문서 한 줄 (문서명 + 발급하기 chip-s / 완료 시 분석완료 chip-m).
  * 활성화 시 chip 배경 primary-500, 텍스트 #F2F7FC로 변경 (Figma).
  */
 export default function DocumentItem({
@@ -38,7 +38,7 @@ export default function DocumentItem({
         isLast ? "" : "border-b border-white"
       }`}
       accessibilityRole="button"
-      accessibilityLabel={`${name} ${isCompleted ? "발급완료" : chipLabel}`}
+      accessibilityLabel={`${name} ${isCompleted ? "분석완료" : chipLabel}`}
     >
       {/* Figma: Label-m (Pretendard 14/500, lh 20), gray-400(활성 시 gray-900) */}
       <Text
@@ -52,7 +52,7 @@ export default function DocumentItem({
       <View>
         {isCompleted ? (
           <ChipM
-            label="발급완료"
+            label="분석완료"
             icon={rightIcon}
             iconTintColor="#2C74F2"
             textClassName="text-primary-500"

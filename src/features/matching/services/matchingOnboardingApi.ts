@@ -28,6 +28,7 @@ export type StudentOnboardingRequest = {
 
 const SUPPORTER_ENDPOINT = "/api/matches/onboarding/supporter";
 const STUDENT_ENDPOINT = "/api/matches/onboarding/student";
+const TIME_SLOTS_ENDPOINT = "/api/matches/time-slots";
 
 /**
  * 서포터즈 온보딩 등록. role이 서버에서 SUPPORTER로 설정되고, 기존에 등록된
@@ -58,6 +59,39 @@ export const submitStudentOnboarding = async (
 ): Promise<void> => {
   try {
     await api.post(STUDENT_ENDPOINT, body);
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
+};
+
+/** 마이페이지 "나의 활동 시간대" 조회. */
+export const getMyTimeSlots = async (): Promise<TimeSlotRequest[]> => {
+  try {
+    const { data } = await api.get<TimeSlotRequest[]>(TIME_SLOTS_ENDPOINT);
+    return data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
+};
+
+/** 마이페이지 "나의 활동 시간대" 수정. 등록된 시간대를 요청 목록으로 전체 교체한다. */
+export const updateMyTimeSlots = async (
+  timeSlots: TimeSlotRequest[],
+): Promise<void> => {
+  try {
+    await api.put(TIME_SLOTS_ENDPOINT, { timeSlots });
   } catch (err) {
     if (isAxiosError(err)) {
       const envelope = err.response?.data as ApiEnvelope<never> | undefined;
