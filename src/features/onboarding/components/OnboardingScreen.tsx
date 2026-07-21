@@ -6,6 +6,7 @@ import OnboardingIntroStep from "./OnboardingIntroStep";
 import OnboardingStageStep from "./OnboardingStageStep";
 import OnboardingFinishStep from "./OnboardingFinishStep";
 import { markOnboardingSeen } from "../lib/onboardingStorage";
+import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
 
 import Tutorial1Illustration from "../../../../assets/images/img_onboarding_stage1.svg";
 import Tutorial2Illustration from "../../../../assets/images/img_onboarding_stage2.svg";
@@ -22,7 +23,8 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    markOnboardingSeen();
+    const userId = useAuthUserStore.getState().user?.id ?? null;
+    markOnboardingSeen(userId);
   }, []);
 
   const goNext = () => setStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1));

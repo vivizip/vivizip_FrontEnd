@@ -12,7 +12,8 @@ export default function NonMemberButton() {
   const router = useRouter();
 
   const handlePress = async () => {
-    const seen = await hasSeenOnboarding();
+    // 비회원 진입은 로그인 계정이 없어 게스트 전용 키를 쓴다
+    const seen = await hasSeenOnboarding(null);
     router.replace(seen ? "/home" : "/onboarding");
   };
 

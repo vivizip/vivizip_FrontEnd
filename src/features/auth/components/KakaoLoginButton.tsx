@@ -3,6 +3,7 @@ import { Image, Pressable, Text } from "react-native";
 import { useRouter } from "expo-router";
 
 import { useKakaoLogin } from "../hooks/useKakaoLogin";
+import { useAuthUserStore } from "../store/useAuthUserStore";
 import { hasSeenOnboarding } from "../../onboarding/lib/onboardingStorage";
 
 const kakaoLogo = require("../../../../assets/icons/kakao_logo.png");
@@ -20,8 +21,9 @@ export default function KakaoLoginButton() {
     const result = await signInWithKakao();
     if (result) {
       // 로그인 화면으로 뒤로가기할 수 없도록 replace로 이동
-      // (온보딩을 아직 안 봤으면 온보딩으로, 봤으면 바로 홈 탭으로)
-      const seen = await hasSeenOnboarding();
+      // (온보딩을 아직 안 봤으면 온보딩으로, 봤으면 바로 홈 탭으로) - 계정별로 판단한다
+      const userId = useAuthUserStore.getState().user?.id ?? null;
+      const seen = await hasSeenOnboarding(userId);
       router.replace(seen ? "/home" : "/onboarding");
     }
   };

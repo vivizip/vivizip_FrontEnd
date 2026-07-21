@@ -17,9 +17,10 @@ type Props = {
 export default function SearchResultList({ results, query, onSelect }: Props) {
   return (
     <View className="w-full gap-3">
-      {results.map((result) => (
+      {results.map((result, index) => (
         <Pressable
-          key={result.title}
+          // 같은 건물(도로명주소)에 업체가 여러 곳이면 title이 중복될 수 있어 index를 더해 유일하게 만든다.
+          key={`${result.title}-${index}`}
           onPress={() => onSelect?.(result)}
           className="active:opacity-70"
         >

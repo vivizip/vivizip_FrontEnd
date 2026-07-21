@@ -43,7 +43,7 @@ export default function AddressListItem({
         <View className="flex-row items-center gap-2">
           <Text
             numberOfLines={1}
-            className="font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-900"
+            className="max-w-[160px] font-pretendard-semibold text-16 font-semibold leading-6 tracking-[-0.16px] text-gray-900"
           >
             {address.title}
           </Text>
