@@ -3,7 +3,8 @@ import { Pressable, Text, View } from "react-native";
 
 type Props = {
   name: string;
-  lastMessage: string;
+  /** GET /api/chat/rooms 목록 API에 마지막 메시지 미리보기가 없어 없을 수 있다 */
+  lastMessage?: string;
   timeAgo: string;
   unreadCount?: number;
   onPress: () => void;
@@ -34,12 +35,14 @@ export default function ChatRoomListItem({
           <Text className="font-pretendard-semibold text-14 font-semibold leading-[22px] text-black">
             {name}
           </Text>
-          <Text
-            numberOfLines={2}
-            className="font-pretendard text-12 leading-4 text-gray-500"
-          >
-            {lastMessage}
-          </Text>
+          {!!lastMessage && (
+            <Text
+              numberOfLines={2}
+              className="font-pretendard text-12 leading-4 text-gray-500"
+            >
+              {lastMessage}
+            </Text>
+          )}
         </View>
       </View>
 

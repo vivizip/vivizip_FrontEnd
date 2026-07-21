@@ -51,7 +51,7 @@ export const uploadAndAnalyzeBrokerageDocument = async (
   imageUri: string,
 ): Promise<BrokerageAnalysisResult> => {
   const formData = new FormData();
-  formData.append("file", {
+  formData.append("files", {
     uri: imageUri,
     name: "brokerage_document.jpg",
     type: "image/jpeg",
@@ -63,8 +63,8 @@ export const uploadAndAnalyzeBrokerageDocument = async (
     BROKERAGE_UPLOAD_ANALYZE_ENDPOINT,
     "leaseCaseId:",
     leaseCaseId,
-    "file:",
-    { field: "file", name: "brokerage_document.jpg", uri: imageUri },
+    "files:",
+    { field: "files", name: "brokerage_document.jpg", uri: imageUri },
   );
 
   try {

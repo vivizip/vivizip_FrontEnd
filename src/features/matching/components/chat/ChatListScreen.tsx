@@ -1,63 +1,56 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import TopBar from "../../../../components/TopBar";
 import ChatRoomListItem from "./ChatRoomListItem";
+import { getChatRooms, type ChatRoom } from "../../services/chatApi";
+import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
+import { useToastStore } from "../../../../store/useToastStore";
 
-// TODO(채팅 백엔드 미구현): 실제 대화방 목록이 없어 목업으로 표시.
-// "킴 응우옌"만 실제로 만들어진 채팅방(/matching/chat)과 연결되고, 나머지는
-// 목록 디자인 확인용 정적 목업이라 탭해도 반응하지 않는다.
-const MOCK_ROOMS = [
-  {
-    id: "kim",
-    name: "킴 응우옌",
-    lastMessage: "안녕하세여 김응우옌씨\n랜덤비빔밥 같이 드쉴래요~?",
-    timeAgo: "5분 전",
-    unreadCount: 1,
-    navigable: true,
-  },
-  {
-    id: "maria",
-    name: "널위한마리아",
-    lastMessage: "집은 어느 지역으로 구하고 싶으세요?",
-    timeAgo: "20분 전",
-    unreadCount: 12,
-    navigable: false,
-  },
-  {
-    id: "tom",
-    name: "톰 홀랭이",
-    lastMessage: "안녕 박지민씨!\n다음주 금요일 어떠세요?",
-    timeAgo: "2일 전",
-    unreadCount: 24,
-    navigable: false,
-  },
-  {
-    id: "zen",
-    name: "젠다이아몬드",
-    lastMessage: "안녕하세요 최민재님!\n커피 한 잔 하실래요?",
-    timeAgo: "7일 전",
-    unreadCount: 0,
-    navigable: false,
-  },
-  {
-    id: "max",
-    name: "막스 베르스타펜",
-    lastMessage: "안녕 홍길동씨!\n다음 주에 저녁 같이 먹을까요?",
-    timeAgo: "30일 전",
-    unreadCount: 0,
-    navigable: false,
-  },
-] as const;
+const FALLBACK_LOAD_ERROR = "채팅 목록을 불러오지 못했어요.";
+const FALLBACK_NAME = "대화 상대";
+
+const formatTimeAgo = (iso: string): string => {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "방금 전";
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay}일 전`;
+};
 
 /**
  * 채팅 목록 탭 (Figma node 1119:17312, "채팅").
- * MateChatScreen(채팅방)의 뒤로가기를 누르면 이 화면으로 돌아온다.
+ * GET /api/chat/rooms는 상대 이름/프로필을 안 주므로, 현재 매칭(lastMatch)과
+ * matchId가 같은 방만 이름을 표시하고 나머지는 일반 라벨로 보여준다.
+ * 마지막 메시지 미리보기/최근 활동 시각도 API에 없어 방 생성 시각으로 대체한다.
  */
 export default function ChatListScreen() {
   const router = useRouter();
+  const lastMatch = useMatchingApplicationStore((state) => state.lastMatch);
+  const role = useMatchingApplicationStore((state) => state.role);
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      getChatRooms()
+        .then(setRooms)
+        .catch((err) => {
+          useToastStore
+            .getState()
+            .show(err instanceof Error ? err.message : FALLBACK_LOAD_ERROR);
+        });
+    }, []),
+  );
+
+  const resolveName = (room: ChatRoom) => {
+    if (!lastMatch || lastMatch.matchId !== room.matchId) return FALLBACK_NAME;
+    return role === "supporter" ? lastMatch.studentName : lastMatch.supporterName;
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -67,20 +60,20 @@ export default function ChatListScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {MOCK_ROOMS.map((room, index) => (
-          <View key={room.id}>
+        {rooms.map((room, index) => (
+          <View key={room.roomId}>
             <ChatRoomListItem
-              name={room.name}
-              lastMessage={room.lastMessage}
-              timeAgo={room.timeAgo}
+              name={resolveName(room)}
+              timeAgo={formatTimeAgo(room.createdAt)}
               unreadCount={room.unreadCount}
-              onPress={() => {
-                if (room.navigable) {
-                  router.push("/matching/chat");
-                }
-              }}
+              onPress={() =>
+                router.push({
+                  pathname: "/matching/chat",
+                  params: { roomId: String(room.roomId) },
+                })
+              }
             />
-            {index < MOCK_ROOMS.length - 1 && (
+            {index < rooms.length - 1 && (
               <View className="h-px w-full bg-gray-50" />
             )}
           </View>
