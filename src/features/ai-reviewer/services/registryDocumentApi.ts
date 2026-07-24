@@ -5,6 +5,9 @@ import type { ApiEnvelope } from "../../../types/api";
 
 const REGISTRY_UPLOAD_ANALYZE_ENDPOINT =
   "/api/documents/registry/upload-analyze";
+const REGISTRY_ANALYSIS_ENDPOINT = "/api/documents/registry/analysis";
+
+const FALLBACK_ANALYSIS_ERROR = "등기부등본 분석 결과를 불러오지 못했어요.";
 
 export type RegistryRiskFlags = {
   provisionalRegistration: boolean;
@@ -42,6 +45,13 @@ export type RegistryAnalysisResult = {
   riskExplanations: RegistryRiskExplanation[];
   marketPrice: number | null;
   depositRiskRatio: number | null;
+};
+
+type RegistryAnalysisStatusResponse = {
+  analysisId: number;
+  status: string;
+  result: RegistryAnalysis | null;
+  failureReason: string | null;
 };
 
 /**
@@ -90,6 +100,41 @@ export const uploadAndAnalyzeRegistry = async (
       },
     );
     return data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
+};
+
+/**
+ * leaseCaseId로 등록된 등기부등본 중 가장 최근 건의 분석 결과를 다시 조회한다.
+ * 재촬영 없이 "분석완료" 상태의 항목을 다시 열었을 때 결과를 바로 보여주기 위한 용도.
+ * 이 응답의 result는 upload-analyze의 analysis 필드와만 같고 riskExplanations/
+ * marketPrice/depositRiskRatio는 안 줘서, 위험 설명은 빈 배열로 시세/위험비율은
+ * null로 채워 넣는다(근저당 탭에서 "확인되지 않음"으로 표시됨).
+ */
+export const getRegistryAnalysis = async (
+  leaseCaseId: number,
+): Promise<RegistryAnalysisResult> => {
+  try {
+    const { data } = await api.get<RegistryAnalysisStatusResponse>(
+      REGISTRY_ANALYSIS_ENDPOINT,
+      { params: { leaseCaseId } },
+    );
+    if (!data.result) {
+      throw new Error(data.failureReason ?? FALLBACK_ANALYSIS_ERROR);
+    }
+    return {
+      analysis: data.result,
+      riskExplanations: [],
+      marketPrice: null,
+      depositRiskRatio: null,
+    };
   } catch (err) {
     if (isAxiosError(err)) {
       const envelope = err.response?.data as ApiEnvelope<never> | undefined;

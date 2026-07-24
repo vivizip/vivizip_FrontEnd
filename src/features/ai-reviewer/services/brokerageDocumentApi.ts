@@ -5,6 +5,7 @@ import type { ApiEnvelope } from "../../../types/api";
 
 const BROKERAGE_UPLOAD_ANALYZE_ENDPOINT =
   "/api/documents/brokerage-document/upload-analyze";
+const BROKERAGE_ANALYSIS_ENDPOINT = "/api/documents/brokerage-document/analysis";
 
 export type BrokerageRegionBox = {
   x: number;
@@ -79,6 +80,31 @@ export const uploadAndAnalyzeBrokerageDocument = async (
         // OCR+AI 분석이 걸리는 시간을 감안해 공용 인스턴스의 기본 10초보다 넉넉하게 설정
         timeout: 60000,
       },
+    );
+    return data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
+};
+
+/**
+ * leaseCaseId로 등록된 중개대상물 확인·설명서 중 가장 최근 건의 분석 결과를 다시 조회한다.
+ * 재촬영 없이 "분석완료" 상태의 항목을 다시 열었을 때 결과를 바로 보여주기 위한 용도.
+ * 본인 케이스가 아니거나 분석이 아직 없으면 서버가 예외를 던진다.
+ */
+export const getBrokerageAnalysis = async (
+  leaseCaseId: number,
+): Promise<BrokerageAnalysisResult> => {
+  try {
+    const { data } = await api.get<BrokerageAnalysisResult>(
+      BROKERAGE_ANALYSIS_ENDPOINT,
+      { params: { leaseCaseId } },
     );
     return data;
   } catch (err) {

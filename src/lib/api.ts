@@ -73,6 +73,19 @@ const reissueTokens = async (): Promise<string | null> => {
   }
 };
 
+/** 앱이 활성화되어 있을 때 호출하는 주기적 토큰 갱신 함수. 동시 호출은 하나로 합친다. */
+export const refreshTokens = async (): Promise<string | null> => {
+  const pending = reissuePromise ?? reissueTokens();
+  reissuePromise = pending;
+  try {
+    return await pending;
+  } finally {
+    if (reissuePromise === pending) {
+      reissuePromise = null;
+    }
+  }
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -87,9 +100,7 @@ api.interceptors.response.use(
       !original._retry
     ) {
       original._retry = true; // 요청당 재시도는 1회만
-      reissuePromise = reissuePromise ?? reissueTokens();
-      const newAccessToken = await reissuePromise;
-      reissuePromise = null;
+      const newAccessToken = await refreshTokens();
 
       if (newAccessToken) {
         original.headers.Authorization = `Bearer ${newAccessToken}`;

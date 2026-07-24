@@ -23,6 +23,8 @@ type MatchingApplicationState = {
   lastMatch: MatchResult | null;
   markApplied: (role: MatchingRole | null) => void;
   markHouseFound: () => void;
+  /** 채팅방에서 "집 구하기 완료"를 다시 눌러 취소했을 때 - 원래 표시 안 한 상태로 되돌린다. */
+  unmarkHouseFound: () => void;
   setLastMatch: (match: MatchResult) => void;
   setMatchStatus: (status: MatchStatusValue) => void;
 };
@@ -49,6 +51,7 @@ export const useMatchingApplicationStore = create<MatchingApplicationState>(
       set((state) =>
         state.houseFoundAt ? state : { houseFoundAt: new Date() },
       ),
+    unmarkHouseFound: () => set({ houseFoundAt: null }),
     setLastMatch: (match) => set({ lastMatch: match }),
     setMatchStatus: (status) => set({ matchStatus: status }),
   }),

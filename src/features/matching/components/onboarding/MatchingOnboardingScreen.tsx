@@ -25,6 +25,10 @@ import {
   type TimeSlotRequest,
 } from "../../services/matchingOnboardingApi";
 import { requestMatch, type MatchStatusValue } from "../../services/matchApi";
+import {
+  confirmSchoolVerificationCode,
+  sendSchoolVerificationCode,
+} from "../../services/schoolVerificationApi";
 import type {
   MatchingGender,
   MatchingKoreanLevel,
@@ -50,6 +54,8 @@ const buildTimeSlotRequests = (slots: Set<string>): TimeSlotRequest[] =>
   });
 
 const FALLBACK_SUBMIT_ERROR = "신청에 실패했어요. 다시 시도해주세요.";
+const FALLBACK_SEND_CODE_ERROR = "인증코드 발송에 실패했어요. 다시 시도해주세요.";
+const FALLBACK_CONFIRM_CODE_ERROR = "인증에 실패했어요. 코드를 다시 확인해주세요.";
 
 // 진행률바가 있는 단계 수. 0~4(환영/역할/이메일/국적/성별)는 공통이고, 5단계부터
 // 역할별로 갈린다 - 서포터즈는 시간대 선택(5)까지, 유학생은 한국어 수준(5)→예산(6)
@@ -106,6 +112,7 @@ export default function MatchingOnboardingScreen() {
   const [deposit, setDeposit] = useState(0);
   const [rent, setRent] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifyingSchoolCode, setIsVerifyingSchoolCode] = useState(false);
 
   const questionSteps =
     role === "student" ? STUDENT_QUESTION_STEPS : SUPPORTER_QUESTION_STEPS;
@@ -125,7 +132,49 @@ export default function MatchingOnboardingScreen() {
 
   const isFinishStep = step === finishStep;
 
+  // 재전송은 표시용 5분 카운트다운과 무관하게 언제든 다시 요청할 수 있다 - 실제
+  // 코드 유효기간(5분) 제한은 서버(Redis TTL)가 관리하고, 프론트는 별도로 막지 않는다.
+  const handleSendSchoolEmailCode = async () => {
+    try {
+      await sendSchoolVerificationCode(email.trim());
+      setEmailPhase("sent");
+      setEmailCode("");
+    } catch (err) {
+      useToastStore
+        .getState()
+        .show(err instanceof Error ? err.message : FALLBACK_SEND_CODE_ERROR);
+    }
+  };
+
+  const handleResendSchoolEmailCode = async () => {
+    try {
+      await sendSchoolVerificationCode(email.trim());
+      setEmailCode("");
+    } catch (err) {
+      useToastStore
+        .getState()
+        .show(err instanceof Error ? err.message : FALLBACK_SEND_CODE_ERROR);
+    }
+  };
+
   const goNext = async () => {
+    if (step === 2) {
+      if (isVerifyingSchoolCode) return;
+      setIsVerifyingSchoolCode(true);
+      try {
+        await confirmSchoolVerificationCode(email.trim(), emailCode.trim());
+        setStep((prev) => prev + 1);
+      } catch (err) {
+        useToastStore
+          .getState()
+          .show(
+            err instanceof Error ? err.message : FALLBACK_CONFIRM_CODE_ERROR,
+          );
+      } finally {
+        setIsVerifyingSchoolCode(false);
+      }
+      return;
+    }
     if (isFinishStep) {
       if (isSubmitting) return;
       setIsSubmitting(true);
@@ -220,19 +269,20 @@ export default function MatchingOnboardingScreen() {
             return {
               question: "학교 메일을 인증해주세요",
               subtitle: "안전한 매칭을 위한 단계입니다",
-              ctaActive: emailPhase === "sent" && emailCode.trim().length > 0,
+              ctaActive:
+                emailPhase === "sent" &&
+                emailCode.trim().length > 0 &&
+                !isVerifyingSchoolCode,
+              ctaLabel: isVerifyingSchoolCode ? "확인 중..." : undefined,
               content: (
                 <MatchingOnboardingSchoolEmailStep
                   email={email}
                   onChangeEmail={setEmail}
                   phase={emailPhase}
-                  onSendCode={() => {
-                    setEmailPhase("sent");
-                    setEmailCode("");
-                  }}
+                  onSendCode={handleSendSchoolEmailCode}
                   code={emailCode}
                   onChangeCode={setEmailCode}
-                  onResend={() => setEmailCode("")}
+                  onResend={handleResendSchoolEmailCode}
                 />
               ),
             };

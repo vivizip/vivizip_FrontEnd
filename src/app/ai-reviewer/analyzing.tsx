@@ -128,7 +128,7 @@ export default function AnalyzingScreen() {
             imageUri as string,
           );
           if (cancelled) return;
-          setBuildingLedgerAnalysis(result);
+          setBuildingLedgerAnalysis(currentHouseId, result);
           router.replace({
             pathname: "/ai-reviewer/document-result",
             params: { documentType },
@@ -139,7 +139,7 @@ export default function AnalyzingScreen() {
             imageUri as string,
           );
           if (cancelled) return;
-          setBrokerageAnalysis(result);
+          setBrokerageAnalysis(currentHouseId, result);
           router.replace({
             pathname: "/ai-reviewer/during/brokerage-result",
             params: { imageUri },
@@ -150,7 +150,7 @@ export default function AnalyzingScreen() {
             imageUri as string,
           );
           if (cancelled) return;
-          setLeaseContractAnalysis(result);
+          setLeaseContractAnalysis(currentHouseId, result);
           router.replace({
             pathname: "/ai-reviewer/during/lease-contract-result",
             params: { imageUri },
@@ -161,7 +161,7 @@ export default function AnalyzingScreen() {
             [imageUri as string],
           );
           if (cancelled) return;
-          setRegistryAnalysis(result);
+          setRegistryAnalysis(currentHouseId, result);
           router.replace({
             pathname: "/ai-reviewer/document-result",
             params: { documentType },

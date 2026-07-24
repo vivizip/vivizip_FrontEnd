@@ -86,9 +86,14 @@ export default function BoomerangBannerCard() {
     useCallback(() => {
       getMatchStatus()
         .then(async (status) => {
+          console.log("[Home] GET /api/matches/status response:", status);
           setMatchStatus(status);
           if (status === "MATCHED") {
             const result = await getMatchResult();
+            console.log(
+              "[Home] GET /api/matches/result response:",
+              JSON.stringify(result),
+            );
             setLastMatch(result);
           }
         })

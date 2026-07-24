@@ -10,7 +10,12 @@ import RiskAccordionCard from "../../../features/ai-reviewer/components/brokerag
 import ComparisonInfoRow from "../../../features/ai-reviewer/components/brokerage-result/ComparisonInfoRow";
 import { useDocumentProgressStore } from "../../../features/ai-reviewer/store/useDocumentProgressStore";
 import { useDocumentAnalysisStore } from "../../../features/ai-reviewer/store/useDocumentAnalysisStore";
-import type { LeaseContractAnalysisResult } from "../../../features/ai-reviewer/services/leaseContractDocumentApi";
+import { useRegisteredHouseStore } from "../../../features/ai-reviewer/store/useRegisteredHouseStore";
+import {
+  getLeaseContractAnalysis,
+  type LeaseContractAnalysisResult,
+} from "../../../features/ai-reviewer/services/leaseContractDocumentApi";
+import { useToastStore } from "../../../store/useToastStore";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 const cautionIcon = require("../../../../assets/icons/ic_caution_colored.png");
@@ -236,9 +241,44 @@ export default function LeaseContractResultScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri?: string }>();
   const sheetTranslateY = useRef(new Animated.Value(SHEET_OFFSCREEN_Y)).current;
   const [stepIndex, setStepIndex] = useState(0);
-  const leaseContractAnalysis = useDocumentAnalysisStore(
-    (state) => state.leaseContractAnalysis,
+  const currentHouseId = useRegisteredHouseStore(
+    (state) => state.currentHouseId,
   );
+  const leaseContractAnalysisByHouse = useDocumentAnalysisStore(
+    (state) => state.leaseContractAnalysisByHouse,
+  );
+  const leaseContractAnalysis = currentHouseId
+    ? leaseContractAnalysisByHouse[currentHouseId] ?? null
+    : null;
+  const setLeaseContractAnalysis = useDocumentAnalysisStore(
+    (state) => state.setLeaseContractAnalysis,
+  );
+
+  // 재촬영 없이 체크리스트에서 완료된 항목을 다시 열었을 때(store가 비어있을 때)만
+  // 저장된 분석 결과를 다시 불러온다 - 업로드 직후 진입은 store에 이미 있어 재조회하지 않는다.
+  useEffect(() => {
+    if (leaseContractAnalysis || !currentHouseId) return;
+    let cancelled = false;
+    getLeaseContractAnalysis(Number(currentHouseId))
+      .then((result) => {
+        if (!cancelled) setLeaseContractAnalysis(currentHouseId, result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          useToastStore
+            .getState()
+            .show(
+              err instanceof Error
+                ? err.message
+                : "임대차계약서 분석 결과를 불러오지 못했어요.",
+            );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [leaseContractAnalysis, currentHouseId, setLeaseContractAnalysis]);
+
   const resultSteps = useMemo(
     () => buildResultSteps(leaseContractAnalysis ?? FALLBACK_ANALYSIS),
     [leaseContractAnalysis],
@@ -271,7 +311,7 @@ export default function LeaseContractResultScreen() {
   };
 
   const handleConfirm = () => {
-    markCompleted("lease-contract");
+    if (currentHouseId) markCompleted(currentHouseId, "lease-contract");
     router.replace("/ai-reviewer");
   };
 

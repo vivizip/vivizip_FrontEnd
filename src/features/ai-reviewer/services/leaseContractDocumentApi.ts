@@ -5,6 +5,9 @@ import type { ApiEnvelope } from "../../../types/api";
 
 const LEASE_CONTRACT_UPLOAD_ANALYZE_ENDPOINT =
   "/api/documents/lease-contract/upload-analyze";
+const LEASE_CONTRACT_ANALYSIS_ENDPOINT = "/api/documents/lease-contract/analysis";
+
+const FALLBACK_ANALYSIS_ERROR = "임대차계약서 분석 결과를 불러오지 못했어요.";
 
 export type LeaseContractRegionBox = {
   x: number;
@@ -95,6 +98,41 @@ export const uploadAndAnalyzeLeaseContract = async (
       },
     );
     return data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
+};
+
+type LeaseContractAnalysisStatusResponse = {
+  analysisId: number;
+  status: string;
+  result: LeaseContractAnalysisResult | null;
+  failureReason: string | null;
+};
+
+/**
+ * leaseCaseId로 등록된 임대차계약서 중 가장 최근 건의 분석 결과를 다시 조회한다.
+ * 재촬영 없이 "분석완료" 상태의 항목을 다시 열었을 때 결과를 바로 보여주기 위한 용도.
+ * 응답 형식은 업로드+분석 API와 동일하다.
+ */
+export const getLeaseContractAnalysis = async (
+  leaseCaseId: number,
+): Promise<LeaseContractAnalysisResult> => {
+  try {
+    const { data } = await api.get<LeaseContractAnalysisStatusResponse>(
+      LEASE_CONTRACT_ANALYSIS_ENDPOINT,
+      { params: { leaseCaseId } },
+    );
+    if (!data.result) {
+      throw new Error(data.failureReason ?? FALLBACK_ANALYSIS_ERROR);
+    }
+    return data.result;
   } catch (err) {
     if (isAxiosError(err)) {
       const envelope = err.response?.data as ApiEnvelope<never> | undefined;

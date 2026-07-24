@@ -15,6 +15,7 @@ import type { ApiEnvelope } from "../../../types/api";
 const KAKAO_LOGIN_ENDPOINT = "/api/auth/login/kakao";
 const LOGOUT_ENDPOINT = "/api/tokens/logout";
 const MY_PROFILE_ENDPOINT = "/api/users/me";
+const WITHDRAW_ACCOUNT_ENDPOINT = "/api/users/me/hard";
 
 // 성공 응답은 봉투 없이 평평한 구조로 온다 (2026-07-07 실제 응답으로 확인)
 export type KakaoLoginResponse = {
@@ -81,7 +82,7 @@ export const getMyProfile = async (): Promise<MyProfileResponse> => {
   return data;
 };
 
-/** 회원탈퇴. 서버 계정을 삭제한다 (되돌릴 수 없음). */
+/** 회원탈퇴. 하드 삭제로 서버 계정을 완전히 삭제한다 (되돌릴 수 없음). */
 export const withdrawAccount = async (): Promise<void> => {
-  await api.delete(MY_PROFILE_ENDPOINT);
+  await api.delete(WITHDRAW_ACCOUNT_ENDPOINT);
 };

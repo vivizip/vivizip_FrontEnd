@@ -14,8 +14,16 @@ import CheckedItemsCard from "../../features/ai-reviewer/components/document-res
 import LoanRiskSection from "../../features/ai-reviewer/components/document-result/LoanRiskSection";
 import { useDocumentProgressStore } from "../../features/ai-reviewer/store/useDocumentProgressStore";
 import { useDocumentAnalysisStore } from "../../features/ai-reviewer/store/useDocumentAnalysisStore";
-import type { RegistryAnalysisResult } from "../../features/ai-reviewer/services/registryDocumentApi";
-import type { BuildingLedgerAnalysis } from "../../features/ai-reviewer/services/buildingLedgerApi";
+import { useRegisteredHouseStore } from "../../features/ai-reviewer/store/useRegisteredHouseStore";
+import {
+  getRegistryAnalysis,
+  type RegistryAnalysisResult,
+} from "../../features/ai-reviewer/services/registryDocumentApi";
+import {
+  getBuildingLedgerAnalysis,
+  type BuildingLedgerAnalysis,
+} from "../../features/ai-reviewer/services/buildingLedgerApi";
+import { useToastStore } from "../../store/useToastStore";
 
 const backIcon = require("../../../assets/icons/ic_left.png");
 const profileIcon = require("../../../assets/icons/icon_profile.png");
@@ -300,12 +308,81 @@ export default function DocumentResultScreen() {
   }>();
   const isBuilding = documentType === "building";
   const isBrokerage = documentType === "brokerage";
-  const registryAnalysis = useDocumentAnalysisStore(
-    (state) => state.registryAnalysis,
+  const currentHouseId = useRegisteredHouseStore(
+    (state) => state.currentHouseId,
   );
-  const buildingLedgerAnalysis = useDocumentAnalysisStore(
-    (state) => state.buildingLedgerAnalysis,
+  const registryAnalysisByHouse = useDocumentAnalysisStore(
+    (state) => state.registryAnalysisByHouse,
   );
+  const registryAnalysis = currentHouseId
+    ? registryAnalysisByHouse[currentHouseId] ?? null
+    : null;
+  const setRegistryAnalysis = useDocumentAnalysisStore(
+    (state) => state.setRegistryAnalysis,
+  );
+  const buildingLedgerAnalysisByHouse = useDocumentAnalysisStore(
+    (state) => state.buildingLedgerAnalysisByHouse,
+  );
+  const buildingLedgerAnalysis = currentHouseId
+    ? buildingLedgerAnalysisByHouse[currentHouseId] ?? null
+    : null;
+  const setBuildingLedgerAnalysis = useDocumentAnalysisStore(
+    (state) => state.setBuildingLedgerAnalysis,
+  );
+
+  // 재촬영 없이 체크리스트에서 완료된 항목을 다시 열었을 때(store가 비어있을 때)만
+  // 저장된 분석 결과를 다시 불러온다 - 업로드 직후 진입은 store에 이미 있어 재조회하지 않는다.
+  useEffect(() => {
+    if (documentType !== "building" || buildingLedgerAnalysis || !currentHouseId) {
+      return;
+    }
+    let cancelled = false;
+    getBuildingLedgerAnalysis(Number(currentHouseId))
+      .then((result) => {
+        if (!cancelled) setBuildingLedgerAnalysis(currentHouseId, result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          useToastStore
+            .getState()
+            .show(
+              err instanceof Error
+                ? err.message
+                : "건축물대장 분석 결과를 불러오지 못했어요.",
+            );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [documentType, buildingLedgerAnalysis, currentHouseId, setBuildingLedgerAnalysis]);
+
+  // 등기부등본도 동일한 패턴: store가 비어있을 때(재촬영 없이 다시 들어온 경우)만 재조회.
+  useEffect(() => {
+    if (isBuilding || isBrokerage || registryAnalysis || !currentHouseId) {
+      return;
+    }
+    let cancelled = false;
+    getRegistryAnalysis(Number(currentHouseId))
+      .then((result) => {
+        if (!cancelled) setRegistryAnalysis(currentHouseId, result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          useToastStore
+            .getState()
+            .show(
+              err instanceof Error
+                ? err.message
+                : "등기부등본 분석 결과를 불러오지 못했어요.",
+            );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isBuilding, isBrokerage, registryAnalysis, currentHouseId, setRegistryAnalysis]);
+
   const registryResult =
     !isBuilding && !isBrokerage && registryAnalysis
       ? buildRegistryResult(registryAnalysis)
@@ -339,10 +416,12 @@ export default function DocumentResultScreen() {
 
   // 이 화면에 도달했다는 건 발급/분석이 완료됐다는 뜻 - 계약전 체크리스트 항목을 완료 처리
   useEffect(() => {
+    if (!currentHouseId) return;
     markCompleted(
+      currentHouseId,
       isBrokerage ? "brokerage" : isBuilding ? "building" : "register",
     );
-  }, [isBrokerage, isBuilding, markCompleted]);
+  }, [currentHouseId, isBrokerage, isBuilding, markCompleted]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">

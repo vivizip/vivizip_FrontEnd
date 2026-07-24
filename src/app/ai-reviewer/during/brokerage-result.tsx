@@ -10,7 +10,12 @@ import RiskAccordionCard from "../../../features/ai-reviewer/components/brokerag
 import ComparisonInfoRow from "../../../features/ai-reviewer/components/brokerage-result/ComparisonInfoRow";
 import { useDocumentProgressStore } from "../../../features/ai-reviewer/store/useDocumentProgressStore";
 import { useDocumentAnalysisStore } from "../../../features/ai-reviewer/store/useDocumentAnalysisStore";
-import type { BrokerageAnalysisResult } from "../../../features/ai-reviewer/services/brokerageDocumentApi";
+import { useRegisteredHouseStore } from "../../../features/ai-reviewer/store/useRegisteredHouseStore";
+import {
+  getBrokerageAnalysis,
+  type BrokerageAnalysisResult,
+} from "../../../features/ai-reviewer/services/brokerageDocumentApi";
+import { useToastStore } from "../../../store/useToastStore";
 
 const backIcon = require("../../../../assets/icons/ic_left.png");
 const cautionIcon = require("../../../../assets/icons/ic_caution_colored.png");
@@ -193,9 +198,44 @@ export default function BrokerageResultScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri?: string }>();
   const sheetTranslateY = useRef(new Animated.Value(SHEET_OFFSCREEN_Y)).current;
   const [stepIndex, setStepIndex] = useState(0);
-  const brokerageAnalysis = useDocumentAnalysisStore(
-    (state) => state.brokerageAnalysis,
+  const currentHouseId = useRegisteredHouseStore(
+    (state) => state.currentHouseId,
   );
+  const brokerageAnalysisByHouse = useDocumentAnalysisStore(
+    (state) => state.brokerageAnalysisByHouse,
+  );
+  const brokerageAnalysis = currentHouseId
+    ? brokerageAnalysisByHouse[currentHouseId] ?? null
+    : null;
+  const setBrokerageAnalysis = useDocumentAnalysisStore(
+    (state) => state.setBrokerageAnalysis,
+  );
+
+  // 재촬영 없이 체크리스트에서 완료된 항목을 다시 열었을 때(store가 비어있을 때)만
+  // 저장된 분석 결과를 다시 불러온다 - 업로드 직후 진입은 store에 이미 있어 재조회하지 않는다.
+  useEffect(() => {
+    if (brokerageAnalysis || !currentHouseId) return;
+    let cancelled = false;
+    getBrokerageAnalysis(Number(currentHouseId))
+      .then((result) => {
+        if (!cancelled) setBrokerageAnalysis(currentHouseId, result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          useToastStore
+            .getState()
+            .show(
+              err instanceof Error
+                ? err.message
+                : "중개대상물 분석 결과를 불러오지 못했어요.",
+            );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [brokerageAnalysis, currentHouseId, setBrokerageAnalysis]);
+
   const resultSteps = useMemo(
     () => buildResultSteps(brokerageAnalysis ?? FALLBACK_ANALYSIS),
     [brokerageAnalysis],
@@ -228,7 +268,7 @@ export default function BrokerageResultScreen() {
   };
 
   const handleConfirm = () => {
-    markCompleted("brokerage");
+    if (currentHouseId) markCompleted(currentHouseId, "brokerage");
     router.replace("/ai-reviewer");
   };
 

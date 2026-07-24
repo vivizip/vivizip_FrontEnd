@@ -12,6 +12,8 @@ export type ChatRoom = {
   matchId: number;
   status: string;
   createdAt: string;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
   /** 내가 아직 읽지 않은 메시지 수 */
   unreadCount: number;
 };

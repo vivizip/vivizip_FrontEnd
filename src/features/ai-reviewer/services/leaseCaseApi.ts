@@ -7,12 +7,18 @@ const LEASE_CASES_ENDPOINT = "/api/lease-cases";
 
 export type LeaseCaseStatus = "ACTIVE" | string;
 
+// 등기부등본+건축물대장 분석 완료 시 DURING_CONTRACT로, 중개대상물+임대차계약서
+// 분석 완료 시 AFTER_CONTRACT로 자동 갱신된다(한 번 오른 단계는 내려가지 않음).
+// "계약전" 초기값 문자열은 스펙에 명시되지 않아 앱 기존 용어(계약전/중/후)에 맞춰 추정함.
+export type ContractStage = "BEFORE_CONTRACT" | "DURING_CONTRACT" | "AFTER_CONTRACT";
+
 export type LeaseCase = {
   leaseCaseId: number;
   name: string;
   roadAddress: string;
   detailAddress: string;
   status: LeaseCaseStatus;
+  contractStage: ContractStage;
   createdAt: string;
   updatedAt: string;
 };

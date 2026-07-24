@@ -30,9 +30,11 @@ type Props = {
   onChangeDate: (date: Date) => void;
   time: Date;
   onChangeTime: (time: Date) => void;
-  location: string;
+  /** 아직 장소를 선택하지 않았으면 null - 이때는 "약속 잡기" 버튼이 비활성화된다. */
+  location: string | null;
   onPressLocation: () => void;
   onConfirm: () => void;
+  isSubmitting?: boolean;
 };
 
 /**
@@ -50,6 +52,7 @@ export default function AppointmentSheet({
   location,
   onPressLocation,
   onConfirm,
+  isSubmitting = false,
 }: Props) {
   const [activeIosPicker, setActiveIosPicker] = useState<
     "date" | "time" | null
@@ -185,8 +188,12 @@ export default function AppointmentSheet({
             accessibilityRole="button"
             accessibilityLabel="장소 선택"
           >
-            <Text className="font-pretendard-medium text-16 font-medium leading-6 text-gray-900">
-              {location}
+            <Text
+              className={`font-pretendard-medium text-16 font-medium leading-6 ${
+                location ? "text-gray-900" : "text-gray-400"
+              }`}
+            >
+              {location ?? "장소를 선택해주세요"}
             </Text>
             <Image
               source={dropdownIcon}
@@ -200,8 +207,8 @@ export default function AppointmentSheet({
       </View>
 
       <CTAButton
-        label="약속 잡기"
-        active
+        label={isSubmitting ? "약속 잡는 중..." : "약속 잡기"}
+        active={!!location && !isSubmitting}
         onPress={onConfirm}
         heightClassName="h-11"
         radiusClassName="rounded-2xl"

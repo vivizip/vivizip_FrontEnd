@@ -6,18 +6,23 @@ import type { BrokerageAnalysisResult } from "../services/brokerageDocumentApi";
 import type { LeaseContractAnalysisResult } from "../services/leaseContractDocumentApi";
 
 type DocumentAnalysisState = {
+  /**
+   * 집(leaseCaseId, useRegisteredHouseStore의 currentHouseId)별 분석 결과 캐시.
+   * house 구분 없이 단일 값으로 캐싱하면 다른 집으로 전환해도 이전 집의 분석
+   * 결과가 그대로 남아 보이는 문제가 있어 house별로 분리해서 저장한다.
+   */
   /** 등기부등본 업로드+분석(POST /api/documents/registry/upload-analyze) 결과. */
-  registryAnalysis: RegistryAnalysisResult | null;
-  setRegistryAnalysis: (result: RegistryAnalysisResult) => void;
+  registryAnalysisByHouse: Record<string, RegistryAnalysisResult>;
+  setRegistryAnalysis: (houseId: string, result: RegistryAnalysisResult) => void;
   /** 건축물대장 업로드+분석(POST /api/documents/building-ledger/upload-analyze) 결과. */
-  buildingLedgerAnalysis: BuildingLedgerAnalysis | null;
-  setBuildingLedgerAnalysis: (result: BuildingLedgerAnalysis) => void;
+  buildingLedgerAnalysisByHouse: Record<string, BuildingLedgerAnalysis>;
+  setBuildingLedgerAnalysis: (houseId: string, result: BuildingLedgerAnalysis) => void;
   /** 중개대상물 확인·설명서 업로드+분석(POST /api/documents/brokerage-document/upload-analyze) 결과. */
-  brokerageAnalysis: BrokerageAnalysisResult | null;
-  setBrokerageAnalysis: (result: BrokerageAnalysisResult) => void;
+  brokerageAnalysisByHouse: Record<string, BrokerageAnalysisResult>;
+  setBrokerageAnalysis: (houseId: string, result: BrokerageAnalysisResult) => void;
   /** 임대차계약서 업로드+분석(POST /api/documents/lease-contract/upload-analyze) 결과. */
-  leaseContractAnalysis: LeaseContractAnalysisResult | null;
-  setLeaseContractAnalysis: (result: LeaseContractAnalysisResult) => void;
+  leaseContractAnalysisByHouse: Record<string, LeaseContractAnalysisResult>;
+  setLeaseContractAnalysis: (houseId: string, result: LeaseContractAnalysisResult) => void;
 };
 
 /**
@@ -26,15 +31,31 @@ type DocumentAnalysisState = {
  */
 export const useDocumentAnalysisStore = create<DocumentAnalysisState>(
   (set) => ({
-    registryAnalysis: null,
-    setRegistryAnalysis: (result) => set({ registryAnalysis: result }),
-    buildingLedgerAnalysis: null,
-    setBuildingLedgerAnalysis: (result) =>
-      set({ buildingLedgerAnalysis: result }),
-    brokerageAnalysis: null,
-    setBrokerageAnalysis: (result) => set({ brokerageAnalysis: result }),
-    leaseContractAnalysis: null,
-    setLeaseContractAnalysis: (result) =>
-      set({ leaseContractAnalysis: result }),
+    registryAnalysisByHouse: {},
+    setRegistryAnalysis: (houseId, result) =>
+      set((state) => ({
+        registryAnalysisByHouse: { ...state.registryAnalysisByHouse, [houseId]: result },
+      })),
+    buildingLedgerAnalysisByHouse: {},
+    setBuildingLedgerAnalysis: (houseId, result) =>
+      set((state) => ({
+        buildingLedgerAnalysisByHouse: {
+          ...state.buildingLedgerAnalysisByHouse,
+          [houseId]: result,
+        },
+      })),
+    brokerageAnalysisByHouse: {},
+    setBrokerageAnalysis: (houseId, result) =>
+      set((state) => ({
+        brokerageAnalysisByHouse: { ...state.brokerageAnalysisByHouse, [houseId]: result },
+      })),
+    leaseContractAnalysisByHouse: {},
+    setLeaseContractAnalysis: (houseId, result) =>
+      set((state) => ({
+        leaseContractAnalysisByHouse: {
+          ...state.leaseContractAnalysisByHouse,
+          [houseId]: result,
+        },
+      })),
   }),
 );

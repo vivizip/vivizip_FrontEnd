@@ -1,9 +1,13 @@
 import { create } from "zustand";
 
 type DocumentProgressState = {
-  /** 발급/분석이 완료된 체크리스트 항목 id 목록 (constants.ts의 ChecklistItem.id) */
-  completedItemIds: string[];
-  markCompleted: (itemId: string) => void;
+  /**
+   * 집(leaseCaseId, useRegisteredHouseStore의 currentHouseId)별로 발급/분석이
+   * 완료된 체크리스트 항목 id 목록 (constants.ts의 ChecklistItem.id).
+   * 집마다 서로 다른 서류 진행 상태를 가지므로 house별로 분리해서 저장한다.
+   */
+  completedItemIdsByHouse: Record<string, string[]>;
+  markCompleted: (houseId: string, itemId: string) => void;
 };
 
 /**
@@ -12,11 +16,16 @@ type DocumentProgressState = {
  * document-result 화면에 도달하면(=발급/분석 완료) 해당 항목을 완료 처리한다.
  */
 export const useDocumentProgressStore = create<DocumentProgressState>((set) => ({
-  completedItemIds: [],
-  markCompleted: (itemId) =>
-    set((state) =>
-      state.completedItemIds.includes(itemId)
-        ? state
-        : { completedItemIds: [...state.completedItemIds, itemId] },
-    ),
+  completedItemIdsByHouse: {},
+  markCompleted: (houseId, itemId) =>
+    set((state) => {
+      const current = state.completedItemIdsByHouse[houseId] ?? [];
+      if (current.includes(itemId)) return state;
+      return {
+        completedItemIdsByHouse: {
+          ...state.completedItemIdsByHouse,
+          [houseId]: [...current, itemId],
+        },
+      };
+    }),
 }));

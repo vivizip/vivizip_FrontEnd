@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -6,8 +6,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   Text,
@@ -23,33 +21,37 @@ import BottomSheet, {
   type BottomSheetItem,
 } from "../../../../components/BottomSheet";
 import AppointmentSheet from "./AppointmentSheet";
-import LocationSearchSheet from "./LocationSearchSheet";
+import AppointmentCard from "./AppointmentCard";
+import LocationSearchSheet, { type SelectedPlace } from "./LocationSearchSheet";
 import CancelMatchSheet from "./CancelMatchSheet";
 import AttachmentMenu from "./AttachmentMenu";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
 import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
-import { requestRematch } from "../../services/matchApi";
+import { getMatchResult, requestRematch } from "../../services/matchApi";
+import { sendChatImage, type ChatMessage } from "../../services/chatApi";
 import {
-  getChatMessages,
-  sendChatImage,
-  type ChatMessage,
-} from "../../services/chatApi";
+  getInitialChatMessages,
+  pollChatMessages,
+  postChatMessage,
+} from "../../services/chatPolling";
 import {
-  connectChatSocket,
-  disconnectChatSocket,
-  sendChatMessage,
-  subscribeChatRoom,
-  type ChatSocketEvent,
-} from "../../services/chatSocket";
+  createAppointment,
+  getAppointmentDetail,
+  getAppointments,
+  type Appointment,
+} from "../../services/appointmentApi";
 import { useToastStore } from "../../../../store/useToastStore";
 
 // 시트가 화면 밖에서 시작하도록 하는 충분히 큰 오프셋 (houses.tsx와 동일한 패턴)
 const SHEET_OFFSCREEN_Y = 400;
 const ANIMATION_DURATION = 220;
-const MESSAGE_PAGE_SIZE = 30;
+const POLL_INTERVAL_MS = 2000;
 const FALLBACK_LOAD_ERROR = "메시지를 불러오지 못했어요.";
 const FALLBACK_CONNECT_ERROR = "채팅 연결에 실패했어요. 다시 시도해주세요.";
 const FALLBACK_IMAGE_ERROR = "사진 전송에 실패했어요. 다시 시도해주세요.";
+const FALLBACK_SEND_MESSAGE_ERROR = "메시지 전송에 실패했어요. 다시 시도해주세요.";
+const FALLBACK_APPOINTMENT_LOAD_ERROR = "약속 정보를 불러오지 못했어요.";
+const FALLBACK_APPOINTMENT_CREATE_ERROR = "약속 생성에 실패했어요. 다시 시도해주세요.";
 const FALLBACK_NAME = "대화 상대";
 
 // 약속잡기/장소검색 두 바텀시트가 같은 슬라이드업+오버레이 애니메이션을 쓰기 때문에 훅으로 뺐다.
@@ -174,26 +176,42 @@ const groupMessages = (messages: DisplayMessage[]): MessageGroup[] => {
  * roomId는 채팅 목록에서 넘어오면 라우트 파라미터로, 홈 배너에서 바로 들어오면
  * lastMatch.chatRoomId로 판단한다.
  * 카카오톡처럼 같은 발신자가 같은 분(分)에 연달아 보낸 메시지는 마지막 메시지에만 시간을 표시한다.
- * "약속잡기"는 백엔드에 전용 메시지 타입이 없어, 확정 시 구조화된 문구를 일반 텍스트로 전송한다.
+ * "약속잡기"는 POST /api/chat/rooms/{roomId}/appointments로 생성되며(수락/거절 없이 즉시
+ * SCHEDULED 확정), 진입 시 GET .../appointments 목록에서 가장 최근 생성된 건을 GET
+ * /api/appointments/{id}로 상세 조회해 상단 고정 카드(AppointmentCard)로 보여준다.
+ * 채팅 메시지 자체는 API가 자동으로 남기지 않아, 확정 시 구조화된 문구를 별도로 전송한다.
  */
 export default function MateChatScreen() {
   const router = useRouter();
   const { roomId: roomIdParam } = useLocalSearchParams<{ roomId?: string }>();
   const houseFoundAt = useMatchingApplicationStore((state) => state.houseFoundAt);
   const markHouseFound = useMatchingApplicationStore((state) => state.markHouseFound);
+  const unmarkHouseFound = useMatchingApplicationStore(
+    (state) => state.unmarkHouseFound,
+  );
   const lastMatch = useMatchingApplicationStore((state) => state.lastMatch);
   const setLastMatch = useMatchingApplicationStore((state) => state.setLastMatch);
-  const role = useMatchingApplicationStore((state) => state.role);
   const myUserId = useAuthUserStore((state) => state.user?.id) ?? null;
 
   const roomId = roomIdParam ? Number(roomIdParam) : (lastMatch?.chatRoomId ?? null);
   const isCurrentMatch = !!lastMatch && lastMatch.chatRoomId === roomId;
-  const mateName = isCurrentMatch
-    ? role === "supporter"
-      ? lastMatch!.studentName
-      : lastMatch!.supporterName
+  const isMeStudent =
+    myUserId != null &&
+    lastMatch != null &&
+    Number(myUserId) === Number(lastMatch.studentId);
+  const isMeSupporter =
+    myUserId != null &&
+    lastMatch != null &&
+    Number(myUserId) === Number(lastMatch.supporterId);
+  const hasMatchedRoom = isCurrentMatch && (isMeStudent || isMeSupporter);
+  const mateName = hasMatchedRoom
+    ? isMeStudent
+      ? lastMatch!.supporterName
+      : isMeSupporter
+        ? lastMatch!.studentName
+        : FALLBACK_NAME
     : FALLBACK_NAME;
-  const mateInfoRows: { label: string; value: string }[] = isCurrentMatch
+  const mateInfoRows: { label: string; value: string }[] = hasMatchedRoom
     ? [
         { label: "국적", value: lastMatch!.counterpartNationality },
         { label: "성별", value: lastMatch!.counterpartGender },
@@ -205,16 +223,16 @@ export default function MateChatScreen() {
 
   const [isSubmittingRematch, setIsSubmittingRematch] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [hasMoreHistory, setHasMoreHistory] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [draft, setDraft] = useState("");
   const [isComposerFocused, setIsComposerFocused] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [appointmentDate, setAppointmentDate] = useState(() => new Date());
   const [appointmentTime, setAppointmentTime] = useState(() => new Date());
-  const [appointmentLocation, setAppointmentLocation] =
-    useState("명동역 8번 출구");
+  const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
+  const [currentAppointment, setCurrentAppointment] =
+    useState<Appointment | null>(null);
+  const [isCreatingAppointment, setIsCreatingAppointment] = useState(false);
   const appointmentSheet = useSlideUpSheet();
   const locationSheet = useSlideUpSheet();
   const menuSheet = useSlideUpSheet();
@@ -228,18 +246,86 @@ export default function MateChatScreen() {
   });
   const attachButtonRef = useRef<View>(null);
 
+  useEffect(() => {
+    if (!roomId || hasMatchedRoom) return;
+    let cancelled = false;
+    getMatchResult()
+      .then((match) => {
+        if (!cancelled) setLastMatch(match);
+      })
+      .catch(() => {
+        // 메시지 조회와 별개로 처리하며, 이름은 fallback을 유지한다.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasMatchedRoom, roomId, setLastMatch]);
+
   // 최초 진입 시 최신 메시지 조회 (서버가 자동으로 읽음 처리 + READ 이벤트 브로드캐스트)
   useEffect(() => {
     if (!roomId) return;
     let cancelled = false;
-    getChatMessages(roomId, { size: MESSAGE_PAGE_SIZE })
-      .then((page) => {
+    let lastMessageId = 0;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const poll = async () => {
+      try {
+        const [incoming, latestMessages] = await Promise.all([
+          pollChatMessages(roomId, lastMessageId),
+          // afterId polling은 신규 메시지만 반환할 수 있으므로 기존 메시지의
+          // isRead 변경도 함께 동기화한다.
+          getInitialChatMessages(roomId),
+        ]);
         if (cancelled) return;
-        setMessages(page.messages);
-        setHasMoreHistory(page.hasNext);
+        const receivedMessages = [...incoming, ...latestMessages];
+        if (receivedMessages.length === 0) return;
+
+        setMessages((previous) => {
+          // receivedMessages 자체에 같은 messageId가 중복될 수 있어(incoming과
+          // latestMessages가 겹치는 구간이 있음) - Map으로 messageId당 하나만
+          // 남겨야 화면에 같은 메시지가 두 번 그려지고 key가 중복되는 걸 막는다.
+          const byId = new Map(previous.map((message) => [message.messageId, message]));
+          for (const message of receivedMessages) {
+            byId.set(message.messageId, {
+              ...byId.get(message.messageId),
+              ...message,
+            });
+          }
+          return Array.from(byId.values()).sort(
+            (a, b) => a.messageId - b.messageId,
+          );
+        });
+        lastMessageId = Math.max(
+          lastMessageId,
+          ...receivedMessages.map((message) => message.messageId),
+        );
+        requestAnimationFrame(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        });
+      } catch (err) {
+        if (!cancelled) {
+          useToastStore
+            .getState()
+            .show(err instanceof Error ? err.message : FALLBACK_LOAD_ERROR);
+        }
+      }
+    };
+
+    getInitialChatMessages(roomId)
+      .then((initialMessages) => {
+        if (cancelled) return;
+        const sortedInitialMessages = [...initialMessages].sort(
+          (a, b) => a.messageId - b.messageId,
+        );
+        setMessages(sortedInitialMessages);
+        lastMessageId = sortedInitialMessages.reduce(
+          (maxId, message) => Math.max(maxId, message.messageId),
+          0,
+        );
         requestAnimationFrame(() => {
           scrollViewRef.current?.scrollToEnd({ animated: false });
         });
+        pollTimer = setInterval(poll, POLL_INTERVAL_MS);
       })
       .catch((err) => {
         useToastStore
@@ -248,73 +334,21 @@ export default function MateChatScreen() {
       });
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [roomId]);
-
-  const handleLoadMoreHistory = useCallback(async () => {
-    if (!roomId || isLoadingMore || !hasMoreHistory || messages.length === 0) {
-      return;
-    }
-    setIsLoadingMore(true);
-    try {
-      const oldestId = messages[0].messageId;
-      const page = await getChatMessages(roomId, {
-        cursor: oldestId,
-        size: MESSAGE_PAGE_SIZE,
-      });
-      setMessages((prev) => [...page.messages, ...prev]);
-      setHasMoreHistory(page.hasNext);
-    } catch (err) {
-      useToastStore
-        .getState()
-        .show(err instanceof Error ? err.message : FALLBACK_LOAD_ERROR);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [roomId, isLoadingMore, hasMoreHistory, messages]);
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (event.nativeEvent.contentOffset.y < 40) {
-      handleLoadMoreHistory();
-    }
-  };
 
   // WebSocket 연결 + 구독. TEXT/IMAGE는 목록에 추가(REST로 이미 추가된 낙관적 이미지 메시지는
   // messageId로 중복 제거), READ는 내가 보낸 메시지 중 lastReadMessageId 이하를 읽음 처리한다.
   useEffect(() => {
     if (!roomId) return;
-    let unsubscribe: (() => void) | null = null;
     let cancelled = false;
 
-    const handleEvent = (event: ChatSocketEvent) => {
-      if (event.type === "READ") {
-        setMessages((prev) =>
-          prev.map((message) =>
-            message.senderId === myUserId &&
-            message.messageId <= event.lastReadMessageId
-              ? { ...message, isRead: true }
-              : message,
-          ),
-        );
-        return;
-      }
-      setMessages((prev) => {
-        if (prev.some((message) => message.messageId === event.messageId)) {
-          return prev;
-        }
-        return [...prev, event];
-      });
-      requestAnimationFrame(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      });
-    };
-
-    connectChatSocket()
-      .then(() => {
+    /* legacy WebSocket effect removed; polling owns this screen */
+    /*
+        // 화면을 나가면서 cleanup이 의도적으로 disconnectChatSocket()을 호출해도
+        // 연결 시도 중이었다면 이 catch가 불린다 - cancelled면 실제 실패가 아니므로 무시한다.
         if (cancelled) return;
-        unsubscribe = subscribeChatRoom(roomId, handleEvent);
-      })
-      .catch((err) => {
         useToastStore
           .getState()
           .show(err instanceof Error ? err.message : FALLBACK_CONNECT_ERROR);
@@ -325,12 +359,46 @@ export default function MateChatScreen() {
       unsubscribe?.();
       disconnectChatSocket();
     };
+    */
   }, [roomId, myUserId]);
 
-  const handleSelectLocation = (location: string) => {
-    setAppointmentLocation(location);
+  const handleSelectLocation = (place: SelectedPlace) => {
+    setSelectedPlace(place);
     locationSheet.close();
   };
+
+  // 채팅방 진입/전환 시 이미 잡힌 약속이 있는지 확인하고, 있으면 가장 최근 생성된
+  // 건(appointmentId가 가장 큰 것)을 상세 조회해 상단 카드로 보여준다.
+  useEffect(() => {
+    if (!roomId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await getAppointments(roomId);
+        if (cancelled) return;
+        if (list.length === 0) {
+          setCurrentAppointment(null);
+          return;
+        }
+        const latestCreated = list.reduce((latest, item) =>
+          item.appointmentId > latest.appointmentId ? item : latest,
+        );
+        const detail = await getAppointmentDetail(latestCreated.appointmentId);
+        if (!cancelled) setCurrentAppointment(detail);
+      } catch (err) {
+        if (!cancelled) {
+          useToastStore
+            .getState()
+            .show(
+              err instanceof Error ? err.message : FALLBACK_APPOINTMENT_LOAD_ERROR,
+            );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [roomId]);
 
   const handlePressMateProfile = () => {
     menuSheet.close();
@@ -384,11 +452,32 @@ export default function MateChatScreen() {
     return () => subscription.remove();
   }, []);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = draft.trim();
+    console.log("[MateChatScreen] 전송 버튼 클릭, draft:", JSON.stringify(text), "roomId:", roomId);
     if (!text || !roomId) return;
-    sendChatMessage(roomId, text);
     setDraft("");
+    try {
+      const message = await postChatMessage(roomId, text);
+      if (message) {
+        setMessages((previous) =>
+          previous.some((item) => item.messageId === message.messageId)
+            ? previous
+            : [...previous, message].sort(
+                (a, b) => a.messageId - b.messageId,
+              ),
+        );
+        requestAnimationFrame(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        });
+      }
+    } catch (err) {
+      // 전송 실패 시 입력창에 문구를 되돌려줘 다시 보낼 수 있게 한다.
+      setDraft(text);
+      useToastStore
+        .getState()
+        .show(err instanceof Error ? err.message : FALLBACK_SEND_MESSAGE_ERROR);
+    }
   };
 
   const openAttachMenu = () => {
@@ -444,21 +533,56 @@ export default function MateChatScreen() {
     }
   };
 
-  const handleConfirmAppointment = () => {
-    if (!roomId) return;
-    const text = [
-      "📅 약속을 만들었어요",
-      `날짜: ${formatAppointmentCardDate(appointmentDate)}`,
-      `시간: ${formatAppointmentCardTime(appointmentTime)}`,
-      `장소: ${appointmentLocation}`,
-    ].join("\n");
-    sendChatMessage(roomId, text);
-    appointmentSheet.close();
+  const handleConfirmAppointment = async () => {
+    if (!roomId || !selectedPlace || isCreatingAppointment) return;
+    setIsCreatingAppointment(true);
+    try {
+      const pad2 = (n: number) => String(n).padStart(2, "0");
+      const scheduledAt = `${appointmentDate.getFullYear()}-${pad2(
+        appointmentDate.getMonth() + 1,
+      )}-${pad2(appointmentDate.getDate())}T${pad2(
+        appointmentTime.getHours(),
+      )}:${pad2(appointmentTime.getMinutes())}:00`;
+      const created = await createAppointment(roomId, {
+        scheduledAt,
+        placeName: selectedPlace.name,
+        placeAddress: selectedPlace.address,
+        latitude: selectedPlace.latitude,
+        longitude: selectedPlace.longitude,
+      });
+      setCurrentAppointment(created);
+      appointmentSheet.close();
+      // 약속 API가 채팅 메시지를 자동으로 남기지 않아, 대화 흐름에도 확정 안내를 남긴다.
+      const text = [
+        "📅 약속을 만들었어요",
+        `날짜: ${formatAppointmentCardDate(appointmentDate)}`,
+        `시간: ${formatAppointmentCardTime(appointmentTime)}`,
+        `장소: ${selectedPlace.name}`,
+      ].join("\n");
+      // 약속 자체는 이미 생성됐으므로, 안내 메시지 전송 실패는 별도로 조용히 로그만 남긴다
+      // (여기서 실패해도 "약속 생성 실패" 토스트로 잘못 안내하지 않기 위함).
+      try {
+        await postChatMessage(roomId, text);
+      } catch (sendErr) {
+        console.log("[MateChatScreen] appointment notice send failed:", sendErr);
+      }
+    } catch (err) {
+      useToastStore
+        .getState()
+        .show(
+          err instanceof Error ? err.message : FALLBACK_APPOINTMENT_CREATE_ERROR,
+        );
+    } finally {
+      setIsCreatingAppointment(false);
+    }
   };
 
   const displayMessages: DisplayMessage[] = messages.map((message) => ({
     ...message,
-    sender: message.senderId === myUserId ? "me" : "mate",
+    sender:
+      myUserId != null && Number(message.senderId) === Number(myUserId)
+        ? "me"
+        : "mate",
   }));
   const messageGroups = groupMessages(displayMessages);
   const roomDateBadge = messages[0]
@@ -475,6 +599,12 @@ export default function MateChatScreen() {
         onPressRight={menuSheet.open}
       />
 
+      {currentAppointment && (
+        <View className="w-full px-4 pt-2">
+          <AppointmentCard appointment={currentAppointment} />
+        </View>
+      )}
+
       <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView
           ref={scrollViewRef}
@@ -485,8 +615,6 @@ export default function MateChatScreen() {
             paddingTop: 8,
             paddingBottom: 16,
           }}
-          onScroll={handleScroll}
-          scrollEventThrottle={200}
           showsVerticalScrollIndicator={false}
         >
           <View className="w-full items-center">
@@ -627,8 +755,7 @@ export default function MateChatScreen() {
                 </Text>
               </Pressable>
               <Pressable
-                onPress={markHouseFound}
-                disabled={houseFoundAt !== null}
+                onPress={houseFoundAt ? unmarkHouseFound : markHouseFound}
                 className={`h-8 flex-row items-center justify-center gap-1.5 rounded-full border px-3 active:opacity-70 ${
                   houseFoundAt
                     ? "border-primary-500 bg-primary-500"
@@ -763,9 +890,10 @@ export default function MateChatScreen() {
                 onChangeDate={setAppointmentDate}
                 time={appointmentTime}
                 onChangeTime={setAppointmentTime}
-                location={appointmentLocation}
+                location={selectedPlace?.name ?? null}
                 onPressLocation={locationSheet.open}
                 onConfirm={handleConfirmAppointment}
+                isSubmitting={isCreatingAppointment}
               />
             </BottomSheet>
           </Animated.View>

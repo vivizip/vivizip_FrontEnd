@@ -26,7 +26,10 @@ const formatTime = (totalSeconds: number) => {
  * (Figma node 2243:9218 빈 입력 / 9246 이메일 입력+전송 활성 / 9275 인증코드 입력+타이머 상태).
  * TopBar/진행률바/CTA는 MatchingOnboardingStepShell이 담당하고, email/phase/code
  * 상태는 다른 단계(역할/성별/국적)와 동일하게 오케스트레이터가 들고 있다.
- * TODO(실제 메일 인증 미구현): 인증코드 전송/검증은 백엔드 연동 전이라 목업 동작만 함.
+ * 인증코드 발송/재전송/검증은 호출부(마이페이지 SchoolVerifyScreen, 매칭 온보딩) 양쪽 모두
+ * school-verification API로 실제 처리한다("다음"을 누르면 confirmSchoolVerificationCode로
+ * 검증 후 다음 단계로 넘어감). "재전송"은 화면의 5분 카운트다운과 무관하게 항상 눌러서 다시
+ * 요청할 수 있다 - 카운트다운은 코드 유효기간 안내용 표시일 뿐 재전송을 막는 제약이 아니다.
  */
 export default function MatchingOnboardingSchoolEmailStep({
   email,

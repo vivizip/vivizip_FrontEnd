@@ -5,6 +5,7 @@ import type { ApiEnvelope } from "../../../types/api";
 
 const BUILDING_LEDGER_UPLOAD_ANALYZE_ENDPOINT =
   "/api/documents/building-ledger/upload-analyze";
+const BUILDING_LEDGER_ANALYSIS_ENDPOINT = "/api/documents/building-ledger/analysis";
 
 const FALLBACK_ANALYSIS_ERROR =
   "건축물대장 분석에 실패했어요. 다시 시도해주세요.";
@@ -71,6 +72,34 @@ export const uploadAndAnalyzeBuildingLedger = async (
         // OCR+AI 분석이 걸리는 시간을 감안해 공용 인스턴스의 기본 10초보다 넉넉하게 설정
         timeout: 60000,
       },
+    );
+    if (!data.result) {
+      throw new Error(data.failureReason ?? FALLBACK_ANALYSIS_ERROR);
+    }
+    return data.result;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const envelope = err.response?.data as ApiEnvelope<never> | undefined;
+      if (envelope?.message) {
+        throw new Error(envelope.message);
+      }
+    }
+    throw err;
+  }
+};
+
+/**
+ * leaseCaseId로 등록된 건축물대장 중 가장 최근 건의 분석 결과를 다시 조회한다.
+ * 재촬영 없이 "분석완료" 상태의 항목을 다시 열었을 때 결과를 바로 보여주기 위한 용도.
+ * 등록된 건축물대장/분석 결과가 없으면 서버가 예외를 던진다.
+ */
+export const getBuildingLedgerAnalysis = async (
+  leaseCaseId: number,
+): Promise<BuildingLedgerAnalysis> => {
+  try {
+    const { data } = await api.get<BuildingLedgerUploadResponse>(
+      BUILDING_LEDGER_ANALYSIS_ENDPOINT,
+      { params: { leaseCaseId } },
     );
     if (!data.result) {
       throw new Error(data.failureReason ?? FALLBACK_ANALYSIS_ERROR);
