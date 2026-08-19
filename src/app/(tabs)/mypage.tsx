@@ -12,7 +12,7 @@ import AccountSettingsSection from "../../features/mypage/components/AccountSett
 import MyPageFooterLinks from "../../features/mypage/components/MyPageFooterLinks";
 import { clearTokens, getRefreshToken } from "../../lib/tokenStorage";
 import { logout, withdrawAccount } from "../../features/auth/services/authApi";
-import { useAuthUserStore } from "../../features/auth/store/useAuthUserStore";
+import { clearMyProfile } from "../../features/auth/hooks/useMyProfile";
 import { useToastStore } from "../../store/useToastStore";
 
 const kebabIcon = require("../../../assets/icons/ic_kebab.png");
@@ -85,7 +85,7 @@ export default function MyPageScreen() {
       }
     }
     await clearTokens();
-    useAuthUserStore.getState().clearUser();
+    clearMyProfile();
     router.replace("/login");
   };
 
@@ -99,7 +99,7 @@ export default function MyPageScreen() {
       return;
     }
     await clearTokens();
-    useAuthUserStore.getState().clearUser();
+    clearMyProfile();
     router.replace("/login");
   };
 

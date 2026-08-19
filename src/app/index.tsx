@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Redirect } from "expo-router";
 
 import { getAccessToken } from "../lib/tokenStorage";
-import { getMyProfile } from "../features/auth/services/authApi";
-import { useAuthUserStore } from "../features/auth/store/useAuthUserStore";
+import { fetchMyProfile } from "../features/auth/hooks/useMyProfile";
 
 // 앱 진입 게이트: 저장된 토큰이 있으면 내 프로필을 조회해 전역 상태를 채운 뒤 홈으로,
 // 토큰이 없거나 프로필 조회가 실패(세션 만료)하면 로그인으로 보낸다
@@ -18,8 +17,7 @@ export default function Index() {
         return;
       }
       try {
-        const profile = await getMyProfile();
-        useAuthUserStore.getState().setUser(profile);
+        await fetchMyProfile();
         setTarget("/home");
       } catch {
         setTarget("/login");

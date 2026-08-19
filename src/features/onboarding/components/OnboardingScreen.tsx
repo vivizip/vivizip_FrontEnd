@@ -6,7 +6,7 @@ import OnboardingIntroStep from "./OnboardingIntroStep";
 import OnboardingStageStep from "./OnboardingStageStep";
 import OnboardingFinishStep from "./OnboardingFinishStep";
 import { markOnboardingSeen } from "../lib/onboardingStorage";
-import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
+import { getCachedProfile } from "../../auth/hooks/useMyProfile";
 
 import Tutorial1Illustration from "../../../../assets/images/img_onboarding_stage1.svg";
 import Tutorial2Illustration from "../../../../assets/images/img_onboarding_stage2.svg";
@@ -23,7 +23,7 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const userId = useAuthUserStore.getState().user?.id ?? null;
+    const userId = getCachedProfile()?.id ?? null;
     markOnboardingSeen(userId);
   }, []);
 

@@ -9,7 +9,7 @@ import ChatRoomListItem from "./ChatRoomListItem";
 import { getChatRooms, type ChatRoom } from "../../services/chatApi";
 import { getMatchResult, getMatchStatus } from "../../services/matchApi";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
-import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
+import { useMyProfile } from "../../../auth/hooks/useMyProfile";
 import { useToastStore } from "../../../../store/useToastStore";
 
 const rightIcon = require("../../../../../assets/icons/ic_right.png");
@@ -50,7 +50,7 @@ export default function ChatListScreen() {
     (state) => state.setMatchStatus,
   );
   const setLastMatch = useMatchingApplicationStore((state) => state.setLastMatch);
-  const myUserId = useAuthUserStore((state) => state.user?.id) ?? null;
+  const myUserId = useMyProfile().data?.id ?? null;
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
   useFocusEffect(

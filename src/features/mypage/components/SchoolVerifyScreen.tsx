@@ -9,8 +9,7 @@ import {
   confirmSchoolVerificationCode,
   sendSchoolVerificationCode,
 } from "../../matching/services/schoolVerificationApi";
-import { getMyProfile } from "../../auth/services/authApi";
-import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
+import { invalidateMyProfile } from "../../auth/hooks/useMyProfile";
 import { useToastStore } from "../../../store/useToastStore";
 
 const FALLBACK_SEND_ERROR = "인증코드 발송에 실패했어요. 다시 시도해주세요.";
@@ -21,7 +20,7 @@ const FALLBACK_CONFIRM_ERROR = "인증에 실패했어요. 다시 시도해주�
  * 부메랑 온보딩의 학교 메일 인증 단계(MatchingOnboardingSchoolEmailStep + 셸)를 그대로
  * 재사용한다 - 화면/문구가 완전히 동일한 디자인이라 중복 구현하지 않는다.
  * 인증코드 발송/확인은 school-verification API로 처리하고, 확인 성공 시
- * 서버가 갱신한 schoolId/schoolVerified를 getMyProfile()로 다시 불러와 반영한다
+ * 프로필 쿼리 캐시를 무효화해 서버가 갱신한 schoolId/schoolVerified를 다시 불러온다
  * (confirm 응답 자체에는 이 값들이 없음).
  */
 export default function SchoolVerifyScreen() {
@@ -61,8 +60,7 @@ export default function SchoolVerifyScreen() {
     setIsSubmitting(true);
     try {
       await confirmSchoolVerificationCode(email.trim(), code.trim());
-      const profile = await getMyProfile();
-      useAuthUserStore.getState().setUser(profile);
+      await invalidateMyProfile();
       router.back();
     } catch (err) {
       useToastStore

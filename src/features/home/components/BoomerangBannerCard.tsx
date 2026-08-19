@@ -13,7 +13,7 @@ import {
   getMatchResult,
   getMatchStatus,
 } from "../../matching/services/matchApi";
-import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
+import { useMyProfile } from "../../auth/hooks/useMyProfile";
 
 const rightIcon = require("../../../../assets/icons/ic_right.png");
 const gradation1 = require("../../../../assets/images/img_boomerang_banner_gradation1.png");
@@ -80,7 +80,7 @@ export default function BoomerangBannerCard() {
   const setLastMatch = useMatchingApplicationStore(
     (state) => state.setLastMatch,
   );
-  const myUserId = useAuthUserStore((state) => state.user?.id);
+  const myUserId = useMyProfile().data?.id;
 
   useFocusEffect(
     useCallback(() => {

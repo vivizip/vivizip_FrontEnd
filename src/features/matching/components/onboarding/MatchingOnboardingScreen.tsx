@@ -15,7 +15,7 @@ import MatchingOnboardingKoreanLevelStep from "./MatchingOnboardingKoreanLevelSt
 import MatchingOnboardingBudgetStep from "./MatchingOnboardingBudgetStep";
 import MatchingOnboardingFinishStep from "./MatchingOnboardingFinishStep";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
-import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
+import { useMyProfile } from "../../../auth/hooks/useMyProfile";
 import { useToastStore } from "../../../../store/useToastStore";
 import {
   submitStudentOnboarding,
@@ -63,8 +63,7 @@ const FALLBACK_CONFIRM_CODE_ERROR = "인증에 실패했어요. 코드를 다시
 const SUPPORTER_QUESTION_STEPS = 6;
 const STUDENT_QUESTION_STEPS = 8;
 
-// TODO(내 정보 조회 API 미구현): 자동 로그인(토큰만 있고 로그인 응답이 없는 경우) 시
-// useAuthUserStore.user가 비어있을 수 있어 그 경우에만 fallback 문구를 쓴다.
+// 프로필 쿼리가 아직 채워지기 전(드물게 자동 로그인 직후 등)에만 fallback 문구를 쓴다.
 const FALLBACK_NICKNAME = "회원";
 
 /**
@@ -90,12 +89,11 @@ export default function MatchingOnboardingScreen() {
   const setMatchStatus = useMatchingApplicationStore(
     (state) => state.setMatchStatus,
   );
-  const nickname =
-    useAuthUserStore((state) => state.user?.nickname) ?? FALLBACK_NICKNAME;
+  const profile = useMyProfile().data;
+  const nickname = profile?.nickname ?? FALLBACK_NICKNAME;
   // 마이페이지에서 이미 학교 인증을 마쳤으면(schoolVerified) 온보딩의 학교 메일 인증
   // 단계(index 2)를 건너뛴다 - 두 곳 다 같은 GET /api/users/me.schoolVerified를 본다.
-  const isSchoolVerified =
-    useAuthUserStore((state) => state.user?.schoolVerified) ?? false;
+  const isSchoolVerified = profile?.schoolVerified ?? false;
   const [step, setStep] = useState(0);
   const [role, setRole] = useState<MatchingRole | null>(null);
   const [email, setEmail] = useState("");

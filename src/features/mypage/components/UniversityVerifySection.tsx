@@ -3,7 +3,7 @@ import { Image, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SvgUri } from "react-native-svg";
 
-import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
+import { useMyProfile } from "../../auth/hooks/useMyProfile";
 
 const universityBadgeIcon = require("../../../../assets/icons/icon_building.png");
 
@@ -15,12 +15,11 @@ const FALLBACK_SCHOOL_LABEL = "-";
  * 화면 /mypage/school-verify로 이동).
  * 인증 후: 학교 뱃지 + 학교명 + "인증완료" 칩.
  * 인증 상태는 GET /api/users/me의 schoolVerified를 그대로 구독한다(로컬 state 없음) -
- * school-verify 화면이 인증 확인 성공 후 getMyProfile()로 다시 불러와 setUser로 갱신하면
- * 여기 자동 반영.
+ * school-verify 화면이 인증 확인 성공 후 프로필 쿼리 캐시를 무효화하면 여기 자동 반영.
  */
 export default function UniversityVerifySection() {
   const router = useRouter();
-  const profile = useAuthUserStore((state) => state.user);
+  const { data: profile } = useMyProfile();
   const isVerified = profile?.schoolVerified ?? false;
   const schoolLabel = profile?.schoolName ?? FALLBACK_SCHOOL_LABEL;
   // 쿼리스트링(?dpl=...)이 붙어서 오는 경우가 있어 endsWith(".svg")로는 못 잡는다 -

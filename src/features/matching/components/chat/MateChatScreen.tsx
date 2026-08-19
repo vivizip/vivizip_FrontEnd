@@ -26,7 +26,7 @@ import LocationSearchSheet, { type SelectedPlace } from "./LocationSearchSheet";
 import CancelMatchSheet from "./CancelMatchSheet";
 import AttachmentMenu from "./AttachmentMenu";
 import { useMatchingApplicationStore } from "../../store/useMatchingApplicationStore";
-import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
+import { useMyProfile } from "../../../auth/hooks/useMyProfile";
 import { getMatchResult, requestRematch } from "../../services/matchApi";
 import { sendChatImage, type ChatMessage } from "../../services/chatApi";
 import {
@@ -191,7 +191,7 @@ export default function MateChatScreen() {
   );
   const lastMatch = useMatchingApplicationStore((state) => state.lastMatch);
   const setLastMatch = useMatchingApplicationStore((state) => state.setLastMatch);
-  const myUserId = useAuthUserStore((state) => state.user?.id) ?? null;
+  const myUserId = useMyProfile().data?.id ?? null;
 
   const roomId = roomIdParam ? Number(roomIdParam) : (lastMatch?.chatRoomId ?? null);
   const isCurrentMatch = !!lastMatch && lastMatch.chatRoomId === roomId;

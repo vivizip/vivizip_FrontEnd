@@ -25,7 +25,8 @@ export const sendSchoolVerificationCode = async (
 
 /**
  * 발송된 인증 코드를 확인한다. 성공하면 서버가 사용자의 schoolId/schoolVerified를
- * 갱신하므로, 호출부는 성공 후 getMyProfile()로 최신 값을 다시 불러와야 한다.
+ * 갱신하므로, 호출부는 성공 후 프로필 쿼리 캐시를 무효화(invalidateMyProfile)해
+ * 최신 값을 다시 불러와야 한다.
  */
 export const confirmSchoolVerificationCode = async (
   schoolEmail: string,

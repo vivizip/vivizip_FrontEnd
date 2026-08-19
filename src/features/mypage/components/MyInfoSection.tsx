@@ -14,7 +14,7 @@ import EditIcon from "../../../../assets/icons/icon_edit s.svg";
 import CameraIcon from "../../../../assets/icons/ic_camera-bold.svg";
 import { useMatchingApplicationStore } from "../../matching/store/useMatchingApplicationStore";
 import { useMoveInRecordStore } from "../../ai-reviewer/store/useMoveInRecordStore";
-import { useAuthUserStore } from "../../auth/store/useAuthUserStore";
+import { getCachedProfile, useMyProfile } from "../../auth/hooks/useMyProfile";
 import BottomSheet from "../../../components/BottomSheet";
 import CTAButton from "../../../components/CTAButton";
 import LanguageSelectSheet, {
@@ -139,7 +139,7 @@ export default function MyInfoSection() {
   );
   const matchCount = useMatchingApplicationStore((state) => state.matchCount);
   const recordCount = useMoveInRecordStore((state) => state.records.length);
-  const profile = useAuthUserStore((state) => state.user);
+  const { data: profile } = useMyProfile();
   const nickname = profile?.nickname ?? FALLBACK_NICKNAME;
   const nationalityLabel = profile?.nationality
     ? (NATIONALITY_LABELS[profile.nationality] ?? profile.nationality)
@@ -155,7 +155,7 @@ export default function MyInfoSection() {
   // 프로필의 language를 초기값으로만 쓰고(1회), 이후 시트에서 고른 값은 로컬 상태로만 관리한다
   // (TODO(언어 변경 API 미구현): 실제로 서버에 반영하는 엔드포인트가 아직 없음).
   const [language, setLanguage] = useState<LanguageOption>(
-    () => useAuthUserStore.getState().user?.language ?? "KOREAN",
+    () => getCachedProfile()?.language ?? "KOREAN",
   );
   const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
   const [isLanguageSheetMounted, setIsLanguageSheetMounted] = useState(false);

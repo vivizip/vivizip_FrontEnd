@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import CTAButton from "../../../../components/CTAButton";
-import { useAuthUserStore } from "../../../auth/store/useAuthUserStore";
+import { useMyProfile } from "../../../auth/hooks/useMyProfile";
 
 const checkIcon = require("../../../../../assets/icons/ic_check_small.png");
 
@@ -19,7 +19,7 @@ const checkIcon = require("../../../../../assets/icons/ic_check_small.png");
 // 이 값과 무관하게 항상 고정이고, 이 안에서만 내용이 스크롤된다.
 const SCROLL_VIEWPORT_HEIGHT = Dimensions.get("window").height * 0.4;
 
-// TODO(프로필 조회 실패 대비): getMyProfile 실패 등으로 user가 비어있을 때만 fallback 문구를 쓴다.
+// TODO(프로필 조회 실패 대비): 프로필 쿼리가 비어있을 때만 fallback 문구를 쓴다.
 const FALLBACK_USER_NAME = "회원";
 
 type Props = {
@@ -47,8 +47,7 @@ export default function CancelMatchSheet({
   isSubmitting,
 }: Props) {
   const canSubmit = reason.trim().length > 0 && !isSubmitting;
-  const currentUserName =
-    useAuthUserStore((state) => state.user?.nickname) ?? FALLBACK_USER_NAME;
+  const currentUserName = useMyProfile().data?.nickname ?? FALLBACK_USER_NAME;
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {

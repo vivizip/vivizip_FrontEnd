@@ -3,7 +3,7 @@ import "../../global.css";
 
 import React, { useEffect } from "react";
 import { AppState } from "react-native";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -11,9 +11,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "../components/Toast";
 import { getRefreshToken } from "../lib/tokenStorage";
 import { refreshTokens } from "../lib/api";
+import { queryClient } from "../lib/queryClient";
 
-// 앱 전체에서 하나의 QueryClient 인스턴스를 공유한다 (리렌더 시 재생성 방지를 위해 모듈 스코프에 선언)
-const queryClient = new QueryClient();
 const TOKEN_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
 export default function RootLayout() {
