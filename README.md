@@ -16,7 +16,7 @@
   - [연동](#연동)
   - [직면했던 문제들](#직면했던-문제들)
   - [향후 구현할 기능](#향후-구현할-기능)
-- [사용법](#사용법)
+  - [보안](#보안)
   - [인증 정보](#인증-정보)
 - [역할](#역할)
 
@@ -59,21 +59,15 @@ VIVIZIP은 카카오 로그인으로 시작해, 하단 4개 탭(홈 / 채팅 / *
 - **STOMP WebSocket 연결 불안정**: 채팅 실시간 수신을 순수 WebSocket(SockJS 미사용) STOMP로 구현했으나 연결이 자주 끊겨, 폴링 방식으로 전환해 안정성을 확보.
 - **주소 검색 결과 React key 중복**: 같은 건물에 여러 업체가 검색되면 주소(title)를 key로 쓰던 목록에서 중복 경고가 발생 → index를 함께 조합해 해결.
 
-## 사용법
+### 보안
 
-```bash
-git clone <this-repo>
-cd vivizip-FrontEnd
-npm install
+`npm audit`로 발견된 취약점 32건(높음 17 · 보통 15) 중 `brace-expansion`, `fast-uri`, `js-yaml`, `nanoid`, `tar`, `undici` 7건은 breaking change 없이 `npm audit fix`로 패치했습니다(`package.json` 변경 없이 `package-lock.json`만 갱신).
 
-# .env.example을 복사해 .env 생성 후 EXPO_PUBLIC_API_URL 설정
-cp .env.example .env
+남은 `image-size` · `postcss` · `uuid` 관련 취약점 7건(GHSA 기준)은 Expo SDK를 54 → 57로 메이저 업그레이드해야 해결되는데, 전부 Metro 번들러 · NativeWind/PostCSS 빌드 파이프라인 · iOS 프로젝트 생성(xcode)처럼 **빌드 타임 도구 체인에서만 쓰이고 실제 배포되는 앱 번들에는 포함되지 않아** 사용자 대상 위험은 낮다고 판단, 다음 Expo SDK 업그레이드 때 함께 정리하기로 하고 의도적으로 보류했습니다.
 
-npx expo start
-```
+## 데모영상
 
-- 네이티브 모듈을 새로 설치하거나 `app.json`의 `plugins`를 바꾼 경우에만 `npx expo prebuild --clean` 후 `npx expo run:android` / `npx expo run:ios`가 필요합니다. 그 외 JS/TS/스타일 변경은 `npx expo start -c`(캐시 클리어)로 충분합니다.
-- TypeScript 변경 후에는 `npx tsc --noEmit`으로 먼저 검증합니다.
+youtube : https://www.youtube.com/shorts/WxynvALhA4s
 
 ### 인증 정보
 
